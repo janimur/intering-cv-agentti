@@ -125,6 +125,18 @@ Ryhmittele osaamiset 3–6 kategoriaan. Käytä `evidence.expertise_areas` pohja
 - Yli 10 vuoden takaiset roolit voit yhdistää tiivistettyyn lauseeseen: "Ohjelmistokehittäjä ja arkkitehti (2005–2014): Tieto, Wipro, Saraware — tekninen tausta joka pohjustaa liiketoimintaosaamista."
 - Uusin rooli ensin (käänteinen kronologia)
 
+### Vähintään 2 mitattavaa tulosta — pakollinen sääntö
+
+Jokaisesta `experience`-listan roolista on löydyttävä **vähintään 2 mitattavaa tulosta** CV-tekstistä. Älä koskaan keksi tuloksia tai kirjoita geneeristä täytetekstiä ("rakensi osaamista", "kehitti liiketoimintaa") täyttääksesi rajan.
+
+Jos rooli ei tarjoa CV-tekstistä vähintään 2 mitattavaa tulosta:
+
+- **Älä sisällytä sitä `experience`-listaan**
+- Sen sijaan: tiivistä se yhdeksi roolimaininnaksi vanhempien roolien yhdistelmälauseessa (esim. "Ohjelmistokehittäjä ja arkkitehti (2005–2014): Tieto, Wipro, Saraware") tai jätä se kokonaan pois jos se ei tue positiointia
+- Hallitustyö-roolit (Board Member jne.) ilman erillisiä mitattavia tuloksia kuuluvat `certifications`- tai erilliseen yhdistelmälauseeseen, ei `experience`-listaan
+
+Tämä on tärkeämpää kuin roolien lukumäärä. 4 vahvaa roolia 8 mitattavalla tuloksella on parempi kuin 7 roolia joissa puolet on tyhjiä.
+
 ### Per rooli
 
 Jokainen rooli sisältää:

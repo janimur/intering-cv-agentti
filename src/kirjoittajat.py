@@ -40,21 +40,6 @@ _WRITER_CONFIG = {
 }
 
 
-def _fix_cv_raw_data(raw: dict) -> dict:
-    """
-    Varmistaa CVDocument-validoinnin onnistumisen: jos jokin experience-rooli
-    sisältää alle 2 results-alkiota, täydennetään viimeistelemällä listaa.
-    Tämä korjaa tilanteet joissa Sonnet tuottaa vanhoille rooleille vain yhden rivin.
-    """
-    experience = raw.get("experience", [])
-    for entry in experience:
-        results = entry.get("results", [])
-        while len(results) < 2:
-            results.append("Rakensin teknistä ja liiketoimintaosaamista em. roolissa.")
-        entry["results"] = results
-    return raw
-
-
 def _run_writer(
     writer_type: WriterType,
     positioning: PositioningDocument,
@@ -103,13 +88,7 @@ def _run_writer(
     if not tool_use_blocks:
         raise RuntimeError(f"Kirjoittajan '{writer_type}' vastauksesta puuttuu tool_use-blokki")
 
-    raw_input: dict = tool_use_blocks[0].input
-
-    # CV:n experience-roolien results-lista vaatii vähintään 2 alkiota skeemassa
-    if writer_type == "cv":
-        raw_input = _fix_cv_raw_data(raw_input)
-
-    return schema_cls.model_validate(raw_input)
+    return schema_cls.model_validate(tool_use_blocks[0].input)
 
 
 def run_linkedin_writer(positioning: PositioningDocument, cv_text: str) -> LinkedInOutput:
