@@ -8,10 +8,11 @@ PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "kartoittaja_system.md"
 
 def run_kartoittaja(baseline_text: str, cv_text: str) -> PositioningDocument:
     """
-    Ajaa kartoittaja-agentin Claude Opus 4.7:llä extended thinking päällä.
+    Ajaa kartoittaja-agentin Claude Opus 4.7:llä adaptive thinking päällä.
     Palauttaa validoidun PositioningDocument-objektin.
 
-    Huomio: Anthropicin extended thinking vaatii temperature=1.0.
+    Huomio: Opus 4.7 käyttää adaptive thinkingiä ja output_config.effort -kontrollia.
+    Temperature=1 koska thinking vaatii sen.
     """
     client = Anthropic()
     system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
@@ -22,10 +23,11 @@ def run_kartoittaja(baseline_text: str, cv_text: str) -> PositioningDocument:
     )
 
     response = client.messages.create(
-        model="claude-opus-4-5",
+        model="claude-opus-4-7",
         max_tokens=8000,
         temperature=1,
-        thinking={"type": "enabled", "budget_tokens": 4000},
+        thinking={"type": "adaptive"},
+        output_config={"effort": "high"},
         system=system_prompt,
         messages=[{"role": "user", "content": user_content}],
         tools=[
@@ -35,7 +37,7 @@ def run_kartoittaja(baseline_text: str, cv_text: str) -> PositioningDocument:
                 "input_schema": to_tool_input_schema(PositioningDocument),
             }
         ],
-        tool_choice={"type": "any"},
+        tool_choice={"type": "auto"},
     )
 
     if response.stop_reason != "tool_use":

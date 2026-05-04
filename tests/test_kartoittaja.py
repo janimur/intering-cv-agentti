@@ -25,7 +25,7 @@ def main() -> None:
     cv_text = extract_text_from_pdf(str(CV_PATH))
     print(f"  {len(cv_text)} merkkiä")
 
-    print("Ajetaan kartoittaja (Opus 4.5 + extended thinking)...")
+    print("Ajetaan kartoittaja (Opus 4.7 + extended thinking)...")
     positioning = run_kartoittaja(baseline_text, cv_text)
 
     print("\n=== Positioning-dokumentti ===\n")
