@@ -58,7 +58,7 @@ def main() -> None:
         print(f"  VIRHE: {e}")
 
     # CV
-    print("\n[2/3] Ajetaan CV-kirjoittaja (Sonnet 4.5)...")
+    print("\n[2/3] Ajetaan CV-kirjoittaja (Opus 4.7)...")
     try:
         cv = run_cv_writer(positioning, cv_text)
         CV_OUT.write_text(cv.model_dump_json(indent=2), encoding="utf-8")

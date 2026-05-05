@@ -1,55 +1,58 @@
 # Self-evaluation — intering CV-agentti, vaihe 1 (promptit)
 
-Päivämäärä: 2026-05-04
+Päivämäärä: 2026-05-05
 Testihenkilö: Jani Muuronen
+Iteraatio: v2 (LinkedIn-prompti tiukennettu, CV-prompti tarkennettu, CV-malli vaihdettu Sonnetista Opus 4.7:ään)
 
 ## 1. Olisiko Jani itse valmis lähettämään tämän LinkedIn-Aboutin asiakkaalle?
 
-Melkein — ei aivan sellaisenaan. About on 2024 merkkiä, 24 merkkiä yli tavoitteen 2000 (evaluate.py raportoi VAROITUS). Se ei ole kriittinen ongelma, mutta kertoo promptin hieman löysästä otteesta pituuden hallinnassa.
+Kyllä. About on 2000 merkkiä tasan, ei toistoa, ei itsearviointi-aloituksia, ei jargonia.
 
-Vahva kohta: aloitus on napakka ja konkreettinen — "Kasvatin Witted Megacorpissa alihankintakonsultointiliiketoiminnan €2.5M:stä €25M:ään viidessä vuodessa kannattavasti — täydellä P&L-vastuulla CEO/GM-roolissa, en konsulttina." Ensimmäinen lause tekee työn: numero, aikaväli, rooli, erottautuminen. Oikea tapa aloittaa.
+Vahva kohta: avauskoukku tekee työn ensimmäisellä lauseella — "€2.5M → €25M viidessä vuodessa, kannattavasti, täydellä P&L-vastuulla. Tämän tein Witted Megacorpissa CEO/GM-roolissa alihankintakonsultointiliiketoiminnalle — en konsulttina, vaan linjajohdossa." Numero, aikaväli, rooli, erottautuminen yhdessä ankkurissa.
 
-Heikko kohta: kolmas kappale (Wittedin lippulaivakeissi) toistaa ensimmäisen kappaleen sisältöä eri sanoilla. "Otin alihankintaliiketoiminnan vastuulleni €2.5M tasolla, määrittelin ydinprosessit..." — tämä ei tuo uutta, se on kierros tuttuun. Lisäksi "Erottaudun siinä, että yhdistän..." -aloitus on klassinen heikkous: itsearviointi toimii paremmin näyttönä kuin väitteenä.
+Vahva kohta toinen: kappaleet ovat täydentäviä, eivät toistavia. Avauskappale tekee väitteen, "Mitä teen" -kappale konkretisoi tilannetyypit, "Vahvin näyttö" -kappale laajentaa Witted-keissin yksityiskohdiksi (prosessit, hinnoittelu, neuvottelut, AI-koulutus) jotka eivät esiinny avauksessa. Erottautumistekijät esitetään näyttönä ("Rakennan konkreettiset järjestelmät — CRM-ERP-integraatiot, KPI-dashboardit, prosessit — enkä jätä Excel-mallia ja lähde"), ei väitteenä. Loppu sulkeutuu konkreettiseen toimintakutsuun: "Mitä etsin: 4–12 kuukauden interim-toimeksiantoja CEO/COO/CCO-roolissa..." + sähköposti ja puhelin.
 
-Toimenpide: lyhennetään Wittedin lippulaivakeissi-kappale puoleen ja poistetaan "Erottaudun siinä, että..." -aloitus. Yhden prompti-kierroksen asia.
+Heikoin kohta tässä versiossa: "Tekninen tausta (ohjelmistoarkkitehti Tieto, Wipro, Saraware) yhdistettynä yli kymmenen vuoden P&L-johtamiseen tarkoittaa, että puhun samaa kieltä sekä teknisen tiimin että hallituksen kanssa." -lause on toimiva mutta voisi olla terävämpi — "puhun samaa kieltä" on kliseen rajoilla. Yksi pieni iteraatio voisi parantaa, mutta tämä ei estä lähetystä.
 
 ## 2. Erottuuko CV interim-CV:nä?
 
-Kyllä, selvästi. Kolme rakenteellista signaalia erottaa sen vakityö-CV:stä:
+Kyllä, selvästi. Neljä signaalia:
 
-Ensinnäkin roolit ovat lyhyitä ja niissä on eksplisiittinen "Interim"-nimike: "Interim COO @ Tekai Oy (10/2024 – 5/2025)", "Interim COO @ Reactron Technologies Oy (5/2024 – 10/2024)". Vakityö-CV ei yleensä korosta roolin väliaikaisuutta otsikossa.
+Ensinnäkin nimikkeet ja jaksot ovat eksplisiittisesti interim: "Interim COO @ Tekai/Reactron (5/2024–5/2025)", "Interim CCO @ Taskmill (9/2025–12/2025)". Kaikki uusimmat roolit ovat alle 12 kuukauden mittaisia ja "Interim"-etuliite on otsikossa. Vakityö-CV ei korosta roolin väliaikaisuutta.
 
-Toiseksi positioning_summary on selkeästi toimeksiantokeskeinen: "Rakennan operatiiviset selkärangat spin-offeille, vien sijoituskierrokset maaliin ja rakennan datavetoiset myyntiorganisaatiot kun skaalaus ei onnistu." Tämä on myyntipuhe toimeksiantajakunnalle, ei kuvaus pitkäaikaisesta työnhausta.
+Toiseksi positioning_summary on toimeksiantokeskeinen: "Skaalaan IT- ja tech-enabled palveluyrityksiä täydellä P&L-vastuulla. Kasvatin Witted Megacorpin alihankintaliiketoiminnan €2.5M:stä €25M:ään viidessä vuodessa CEO/GM-roolissa — en konsulttina, vaan linjajohdossa. Rakennan operatiiviset selkärangat spin-offeille, vien sijoituskierrokset maaliin ja rakennan datavetoiset myyntiorganisaatiot kun skaalaus ei onnistu." Tämä on myyntipuhe ostajalle, ei kuvaus pitkän linjan työnhausta.
 
-Kolmanneksi key_results -lista on tilannetyyppikohtainen: "Tekai-spin-offin operatiivinen selkäranka käyttöön alle 6 kuukaudessa", "Due diligence -asiat suljettu 2 viikossa". Lyhyet, mitattavat projektisuoritukset — interim-logiikka, ei vuosivastuun kertyminen.
+Kolmanneksi key_results on tilannetyyppikohtainen ja aikasidonnainen: "spin-offin operatiivinen selkäranka käyttöön alle 6 kuukaudessa", "DD-asiat suljettu 2 viikossa". Lyhyitä, määrällisiä projektisuoritteita.
 
-Vakityö-haku olisi korostanut pitkää tenure-aikaa (Witted 2018–2024 on selkeä), tiimikokoa ja organisaatiotason kehitystä. Tässä CV:ssä Witted-rooli on yksi viiden joukossa eikä hallitse rakennetta.
+Neljänneksi vanhempi tekninen ura on tiivistetty `certifications`-osion yhdistelmälauseeseen: "Aiempi tekninen tausta (2005–2014): ohjelmistoarkkitehti ja pääprojektipäällikkö (yli 150 osallistujaa) GSM-verkkoelementtien kehityksessä — Tieto, Wipro, Saraware, Crelint, Houston Inc., Citrus Solutions; AR-yrittäjä Zibra Oy (2012–2020)." Tämä on rakenteellinen valinta joka erottaa interim-CV:n vakityö-CV:stä — vakityö-CV listaisi nämä omiksi rivikseen kronologisesti.
 
 ## 3. Onko positiointidokumentti tarpeeksi terävä?
 
-On, ja se on vaiheen 1 selkein onnistuminen. Kolme arvioitavaa ulottuvuutta:
+On, ja se on edelleen vaiheen 1 selkein onnistuminen. Positiointidokumenttia ei tarvinnut iteroida — kartoittaja-prompti tuotti kerralla käyttökelpoisen lähtökohdan.
 
-target_situations on poikkeuksellisen käyttökelpoinen. Viisi konkreettista tilannetyyppiä — skaalaus €2–30M, nearshore/offshore-käyttöönotto, spin-offin selkäranka 6kk, investor readiness, datavetoinen myyntimoottori — ovat toimeksiantolähtöisiä, ei kompetenssikuvauksia. Kirjoittaja voi suoraan rakentaa näistä tilannetyyppikohtaisia kappaleita.
+`target_situations` on poikkeuksellisen käyttökelpoinen: viisi tilannetyyppiä (skaalaus €2–30M, nearshore/offshore-käyttöönotto, spin-offin selkäranka 6kk, investor readiness, datavetoinen myyntimoottori) ovat toimeksiantolähtöisiä, eivät kompetenssikuvauksia. Kirjoittajat saivat näistä suoraan rakennusaineksia.
 
-differentiators on selkeä ja erottuva. "Operaattori täydellä P&L-vastuulla €25M tasolla — johti liiketoimintaa, ei tehnyt suosituksia" on konkreettinen väite, ei adjektiivilista. "Toistuva näyttö sama tilannetyyppi useita kertoja" -kohta on erityisen hyvä, koska se tekee väitteen toistettavuudesta.
+`differentiators` on selkeä ja erottuva: "Operaattori täydellä P&L-vastuulla €25M tasolla — johti liiketoimintaa CEO/GM-roolissa, ei tehnyt suosituksia konsulttina." Konkreettinen väite, ei adjektiivilista.
 
-exclusions-lista ohjaa tehokkaasti. "Ei käytetä 'auttoi', 'tuki', 'osallistui' -tyyppistä kieltä" on täsmällinen ohjaus joka näkyy lopputuloksessa — CV:ssä ja Aboutissa subjekti on Jani, verbit ovat aktiivimuodossa.
+`exclusions`-lista ohjaa tehokkaasti: "Ei käytetä 'auttoi', 'tuki', 'osallistui' -tyyppistä kieltä operatiivisissa rooleissa" näkyy lopputuloksissa — Aboutissa ja CV:ssä subjekti on Jani, verbit ovat aktiivimuodossa.
 
-Ainoa jäänyt heikkous: positioning.primary_angle alkaa sanalla "Skaalaan IT-palveluyrityksiä" mutta sisältää heti perään "skaalaaja" — positioning-dokumentti itse käyttää substantiivia "skaalaaja" joka on suomalainen konsulttiverkostosanahirviö. Se ei ole kielletty sana, mutta herättää kysymyksen onko se differentiator vai kategoria.
+Ainoa kriitti: positioning käyttää substantiivia "skaalaaja", joka voi kuulostaa konsulttiverkostosanalta. Ei kielletty lista, mutta jatkoiteraatiossa voisi harkita aktiiviverbiä ("skaalaan") substantiivin sijaan otsikoissa.
 
 ## 4. Mikä on heikoin lenkki?
 
-CV:n Codemen-rooli (9/2017–2/2018). Se on kahdella lauseella hoidettu täyte-entry jossa ei ole yhtään mitattavaa tulosta: "Loin uusia ratkaisuja ja liiketoimintaa service design -menetelmillä" ja "Vein läpi mobiilisovelluskehitystä, voice user interface -toteutuksia...". Molemmat täyttävät schema-minimivaatimuksen (2 results), mutta eivät tuota mitään ostajalle relevanttia signaalia.
+Tämän iteraation jälkeen heikointa lenkkiä on vaikea osoittaa — kaikki 12 evaluate.py-kriteeriä menevät OK ilman varoituksia. Suurin riski seuraavalle testihenkilölle:
 
-Ongelma on kaksiosainen: ensinnäkin kirjoittaja-prompti ei osaa tehdä strategista valintaa siitä, jätetäänkö heikko rooli pois vai käytetäänkö se kontrastiväittämänä ("ohjelmistokehittäjä-tausta on erottautumistekijäni, ei pääviesti"). Nyt se roikkuu dokumentissa ilman selitystä miksi se on siellä. Toiseksi schema ei salli tyhjää results-listaa, joten kirjoittaja joutuu keksimään merkityksettömiä täyterivejä välttääkseen validointivirheen.
+**Kartoittajan ylivahvuus → riski toiselle testihenkilölle.** Kartoittaja toimii loistavasti Janin profiililla, mutta Janilla on poikkeuksellisen kvantifioitu lippulaivasaavutus (€2.5M → €25M). Jäsenelle, jolla on vähemmän selkeä numeronäyttö, kartoittaja saattaa joutua täyttämään `flagship_story.result_quantified` -kentän heikommilla luvuilla — ja kirjoittajat rakentavat tämän varaan. Tämä riski näkyy vasta kun ajetaan toista testihenkilöä.
 
-Parannus vaatisi kahta asiaa: kirjoittaja-promptiin eksplisiittinen ohje "jos vanhemmasta roolista ei ole interim-relevanttia mitattavaa tulosta, jätä koko rooli pois tai kirjoita yksi lause kontrastiväittämänä" sekä schema-muutos jossa experience.results on min_length=1 mutta prompti ohjaa vahvasti vähintään 2:een vain relevantissa materiaalissa.
+**CV-promptin "tiivistä vanhat roolit" -ohje tukeutuu Opus 4.7:ään.** Aiempi iteraatio Sonnetilla osoitti, että sama prompti ei tuota samaa lopputulosta heikommalla mallilla — Sonnet jätti vajaita rooleja experienceen sen sijaan että tiivistäisi ne yhdistelmälauseiksi. Mallivalinta on osa promptisuunnittelua, ei erillinen päätös. Jatkossa tämä on muistettava jos kustannussyistä halutaan kokeilla halvempia malleja CV-pinoon.
 
 ## Tekniset huomiot vaiheen 1 toteutuksesta
 
-- Claude claude-opus-4-5 + extended thinking tuotti positioning-dokumentin jossa ei ollut yhtään tyhjää kenttää (evaluate.py: OK). Extended thinking auttoi erityisesti differentiator-erottelussa.
-- LinkedInOutput.about: skema ei aseta ylärajaa merkkimäärälle, ainoastaan prompti. 2024 vs 2000 -ylitys osoittaa, että pelkällä "max 2000 merkkiä" -ohjeella malli ylittää rajan. Tarvitaan joko schema-tason max_length tai promptiin eksplisiittisempi laskuohje.
-- CVDocument.experience.results: min_length=2 schemassa toimii oikein (kaikki roolit täyttivät ehdon), mutta pakottaa generoimaan heikkoa sisältöä hiljaisemmille rooleille.
-- evaluate.py ajaa kaikki 12 kriteeriä, exit-koodi 0 Janin testidatalla (1 VAROITUS about-pituudesta).
-- Emoji-tarkistus (unicodedata.category == "So") toimii oikein — kaikki neljä output-tiedostoa puhtaita.
-- Kiellettyjen sanojen regex-logiikka: `\bskaalata\b` ei osuma (positioning-dokumentissa on "skaalaaja", "skaalaantunut" jne.), mikä on oikea käytös.
+- **Kartoittaja**: Claude Opus 4.7 + adaptive thinking (`output_config.effort: "high"`) tuotti positioning-dokumentin jossa ei ollut yhtään tyhjää kenttää. Adaptive thinking auttoi erityisesti differentiator-erottelussa.
+- **API-rajoitukset thinking-tilassa**: Opus 4.7 + thinking ei tue `temperature`-parametria eikä `tool_choice={"type": "any"}`-pakotusta. Käytetään `tool_choice={"type": "auto"}` ja luotetaan promptin output-ohjeeseen — mallin yhteistyö toimi luotettavasti kaikilla testikerroilla.
+- **Mallivalinta**: alkuperäinen suunnitelma käytti Sonnet 4.5:ttä CV-pinossa kustannussyistä. Iteraatiossa vaihdettu Opus 4.7:ään, koska Sonnet ei noudattanut tarkennettua "mitattava tulos" -määritelmää (jätti vajaita rooleja experiencessa). Opus tiivistää vanhat roolit certifications-osion yhdistelmälauseeksi prompti-ohjeen mukaisesti.
+- **LinkedInOutput.about**: skema ei aseta ylärajaa, ainoastaan prompti. Iteraatiossa lisätty promptiin eksplisiittinen "lyhennä alle 2000 merkkiin ennen tool-kutsua" — Opus 4.7 noudatti rajaa täsmällisesti (2000 merkkiä tasan).
+- **CVDocument.experience.results**: schema-tason `min_length=2` toimi pakottavasti. Yhdistettynä prompti-ohjeeseen "ei mitattavissa olevia rivejä → jätä rooli pois" tuottaa luonnollisen ratkaisun ilman geneerisiä fallback-rivejä.
+- **evaluate.py**: 12 kriteeriä, exit-koodi 0 Janin testidatalla v2-iteraatiossa. Aiempi v1-iteraatio: 1 VAROITUS (about 2024 merkkiä). v2: 0 varoitusta.
+- **Kiellettyjen sanojen regex**: `\bskaalata\b` ei osu sallittuihin muotoihin "skaalaaja", "skaalannut", "skaalasin" — toimii oikein.
+- **Iteraatiokustannus**: kaikki kolme kirjoittajaa Opus 4.7:llä on noin 2× kalliimpi kuin Sonnet-CV-versio. Hyväksyttävä toimitusprojektissa, jossa promptien laatu määrää tuotteen laadun.

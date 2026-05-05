@@ -101,7 +101,9 @@ Positiointikulma tulee `positioning.primary_angle`-kentästä. Tiivistä se head
 
 ### Tekninen vaatimus
 
-- Tavoitepituus: 1500–2000 merkkiä
+- Tavoitepituus: 1700 merkkiä (sallittu vaihteluväli 1500–2000)
+- Laske kirjoittamasi about-tekstin merkkimäärä ennen tallennusta
+- Jos olet yli 1950 merkin, lyhennä ennen tool-kutsua — lopullinen on alle 2000
 - Ei otsikoita sisällä — yhtenäinen kappaleformaatti
 
 ### Rakenne (3–5 kappaletta)
@@ -110,11 +112,17 @@ Positiointikulma tulee `positioning.primary_angle`-kentästä. Tiivistä se head
 
 **Mitä teen** — positioi jäsenen konkreettisesti: millaisiin tilanteisiin, minkäkokoisiin yrityksiin, mikä on arvolupaus. Lähde `positioning.target_situations` ja `positioning.target_buyers` -kentistä.
 
-**Vahvin näyttö** — kirjoita `evidence.flagship_story` luonnollisesti kerrottuna kappaleena. Konteksti, toimenpiteet, mitattu tulos. Ei lista — kertomus.
+**Vahvin näyttö** — kirjoita `evidence.flagship_story` luonnollisesti kerrottuna kappaleena. Konteksti, toimenpiteet, mitattu tulos. Ei lista — kertomus. Pidä tämä kappale tiukkana: 2–4 lausetta riittää.
 
 **Erottautumistekijät** — kirjoita `positioning.differentiators` luontevina lauseina, ei bullet-listana. Nämä ovat syyt miksi ostaja valitsee juuri tämän henkilön geneerisen interimin sijaan.
 
 **Mitä etsin** — viimeinen kappale. Selkeästi: minkälainen tilanne, minkäkokoinen yritys, miten ottaa yhteyttä. Toimintakutsu on konkreettinen, ei "otan mielelläni yhteyttä". Lähde `positioning.target_situations` -kentästä.
+
+### Mitä välttää About-tekstissä
+
+- **Älä toista samaa keissia eri kappaleissa**. Jos lippulaivasaavutus on mainittu avauskoukussa, "Vahvin näyttö" -kappale joko jättää sen tai laajentaa konkreettisilla yksityiskohdilla — ei kerro samaa eri sanoilla.
+- **Älä aloita kappaletta itsearvioinnilla**. Sellaiset kuten "Erottaudun siinä, että...", "Vahvuuteni on...", "Olen erityisen hyvä..." ovat heikkoja — itsearviointi toimii paremmin näyttönä kuin väitteenä. Aloita kappale toiminnalla tai tilanteella, anna lukijan tehdä päätelmä.
+- **Älä käytä "kokenut", "monipuolinen", "vahva osaaminen"** -tyyppisiä adjektiiveja. Korvaa konkreettisella faktalla.
 
 ---
 
