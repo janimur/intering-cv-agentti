@@ -25,7 +25,7 @@ _WRITER_CONFIG = {
     },
     "cv": {
         "prompt_file": "kirjoittaja_cv_system.md",
-        "model": "claude-sonnet-4-5",
+        "model": "claude-opus-4-7",
         "tool_name": "save_cv_document",
         "tool_description": "Tallenna CV strukturoituna JSON:na",
         "schema": CVDocument,

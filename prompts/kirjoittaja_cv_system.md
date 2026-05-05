@@ -127,15 +127,30 @@ Ryhmittele osaamiset 3–6 kategoriaan. Käytä `evidence.expertise_areas` pohja
 
 ### Vähintään 2 mitattavaa tulosta — pakollinen sääntö
 
-Jokaisesta `experience`-listan roolista on löydyttävä **vähintään 2 mitattavaa tulosta** CV-tekstistä. Älä koskaan keksi tuloksia tai kirjoita geneeristä täytetekstiä ("rakensi osaamista", "kehitti liiketoimintaa") täyttääksesi rajan.
+Jokaisesta `experience`-listan roolista on löydyttävä **vähintään 2 mitattavaa tulosta** CV-tekstistä.
 
-Jos rooli ei tarjoa CV-tekstistä vähintään 2 mitattavaa tulosta:
+**Mitattava tulos sisältää vähintään yhden seuraavista:**
+
+- **Numero** (lukumäärä): "lähes 200 konsulttia", "5 hengen tiimi", "12 maata"
+- **Prosentti tai kerroin**: "10x kasvu", "+45 % marginaali", "−30 % kustannukset"
+- **Euromäärä**: "€2.5M → €25M", "€5M budjetti"
+- **Aikamääre suoritteena**: "alle 6 kuukaudessa", "2 viikossa", "12 kk:n tiekartta"
+- **Konkreettinen lopputulos jolla on nimi**: "vähemmistösijoitus suljettu", "ISO 27001 -sertifiointi saatu"
+
+**EI mitattavaa tulosta:**
+
+- "Loin uusia ratkaisuja ja liiketoimintaa" (ei numeroa, ei aikaa)
+- "Vein läpi mobiilisovelluskehitystä" (kuvaa tekemistä, ei tulosta)
+- "Kehitin myyntiprosesseja" (ei mittaria)
+- "Rakensin teknistä osaamista" (geneerinen täyte)
+
+Jos roolista ei löydy CV-tekstistä **vähintään 2 yllä määriteltyä mitattavaa tulosta**:
 
 - **Älä sisällytä sitä `experience`-listaan**
 - Sen sijaan: tiivistä se yhdeksi roolimaininnaksi vanhempien roolien yhdistelmälauseessa (esim. "Ohjelmistokehittäjä ja arkkitehti (2005–2014): Tieto, Wipro, Saraware") tai jätä se kokonaan pois jos se ei tue positiointia
 - Hallitustyö-roolit (Board Member jne.) ilman erillisiä mitattavia tuloksia kuuluvat `certifications`- tai erilliseen yhdistelmälauseeseen, ei `experience`-listaan
 
-Tämä on tärkeämpää kuin roolien lukumäärä. 4 vahvaa roolia 8 mitattavalla tuloksella on parempi kuin 7 roolia joissa puolet on tyhjiä.
+Älä koskaan keksi numeroita tai täytä mitattomalla rivillä rajaa. **4 vahvaa roolia 8 mitattavalla tuloksella on parempi kuin 7 roolia joista 2 on tyhjiä.**
 
 ### Per rooli
 
