@@ -44,6 +44,7 @@ def _run_writer(
     writer_type: WriterType,
     positioning: PositioningDocument,
     cv_text: str,
+    linkedin_text: str | None = None,
 ) -> BaseModel:
     """Yhteinen ajologiikka kaikille kolmelle kirjoittajalle."""
     config = _WRITER_CONFIG[writer_type]
@@ -51,12 +52,13 @@ def _run_writer(
     system_prompt = (PROMPTS_DIR / config["prompt_file"]).read_text(encoding="utf-8")
     schema_cls: type[BaseModel] = config["schema"]
 
-    user_content = (
-        "## Positiointidokumentti\n\n"
-        f"{positioning.model_dump_json(indent=2)}\n\n"
-        "## CV-teksti\n\n"
-        f"{cv_text}"
-    )
+    sections = [
+        "## Positiointidokumentti\n\n" + positioning.model_dump_json(indent=2),
+        "## CV-teksti\n\n" + cv_text,
+    ]
+    if linkedin_text:
+        sections.append("## LinkedIn-profiilin teksti (nykyinen)\n\n" + linkedin_text)
+    user_content = "\n\n".join(sections)
 
     # Opus 4.7 käyttää adaptive thinkingiä eikä hyväksy temperature-parametria
     create_kwargs: dict[str, Any] = {
@@ -91,13 +93,25 @@ def _run_writer(
     return schema_cls.model_validate(tool_use_blocks[0].input)
 
 
-def run_linkedin_writer(positioning: PositioningDocument, cv_text: str) -> LinkedInOutput:
-    return _run_writer("linkedin", positioning, cv_text)  # type: ignore[return-value]
+def run_linkedin_writer(
+    positioning: PositioningDocument,
+    cv_text: str,
+    linkedin_text: str | None = None,
+) -> LinkedInOutput:
+    return _run_writer("linkedin", positioning, cv_text, linkedin_text)  # type: ignore[return-value]
 
 
-def run_cv_writer(positioning: PositioningDocument, cv_text: str) -> CVDocument:
-    return _run_writer("cv", positioning, cv_text)  # type: ignore[return-value]
+def run_cv_writer(
+    positioning: PositioningDocument,
+    cv_text: str,
+    linkedin_text: str | None = None,
+) -> CVDocument:
+    return _run_writer("cv", positioning, cv_text, linkedin_text)  # type: ignore[return-value]
 
 
-def run_intering_writer(positioning: PositioningDocument, cv_text: str) -> InteringOutput:
-    return _run_writer("intering", positioning, cv_text)  # type: ignore[return-value]
+def run_intering_writer(
+    positioning: PositioningDocument,
+    cv_text: str,
+    linkedin_text: str | None = None,
+) -> InteringOutput:
+    return _run_writer("intering", positioning, cv_text, linkedin_text)  # type: ignore[return-value]
