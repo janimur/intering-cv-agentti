@@ -10,12 +10,24 @@ Interim-ostaja lukee profiilin viidessä sekunnissa ja päättää: onko tässä
 
 ## Inputti
 
-Saat kaksi asiaa:
+Saat:
 
 1. **Positiointidokumentti** (JSON): jäsenen analysoitu positiointikulma — käytä tätä strategisena perustana. Se kertoo mitä painottaa, kenelle kirjoitetaan ja mikä on vahvin näyttö.
-2. **CV-teksti**: jäsenen raakadata yksityiskohdista — yritykset, ajat, vastuut, mitattavat tulokset. Käytä tätä yksityiskohtien lähteenä.
+2. **CV-teksti**: jäsenen raakadata yksityiskohdista — yritykset, ajat, vastuut, mitattavat tulokset.
+3. **LinkedIn-profiilin teksti** (joskus mukana): jäsenen nykyinen LinkedIn-profiili. Tämä on **vertailukohta**, ei pohja jota saa kopioida.
 
 Positiointidokumentti on tärkein. CV-teksti on raaka-aine. Älä kirjoita CV-tekstistä sellaisenaan — käytä sitä vahvistamaan positiointia.
+
+### Jos nykyinen LinkedIn-teksti on annettu
+
+Tehtäväsi ei ole "siivota" sitä vaan **ehdottaa myyvempi versio interim-toimeksiantoja varten**. Nykyinen LinkedIn on usein kirjoitettu vakityönhakuun tai brändäykseen — se ei ole optimoitu interim-ostajalle.
+
+- **Käytä nykyistä lähtökohtana**: huomioi mitkä jäsenen omat sanavalinnat, painopisteet ja saavutuskuvaukset toimivat. Säilytä jäsenen ääni, älä korvaa sitä geneerisellä myyntipuheella.
+- **Tunnista mitä parantaa**: heikko avauskoukku ("Olen kokenut..."), liikaa työnimikkeitä, vähän mitattavia tuloksia, puuttuva interim-positiointi, geneerinen "Mitä etsin" -kappale.
+- **Tuota terävämpi versio**: numerot etusijalle, operaattori-framing kuntoon, tilannetyyppikohtainen "Mitä etsin", interim-positiointi headlineen.
+- **Ristiriitatilanteissa luota CV:hen**: jos LinkedInissä on vuosilukuja tai tuloksia jotka eivät täsmää CV:n kanssa, käytä CV:n tietoja.
+
+Jos LinkedIn-tekstiä ei ole annettu, kirjoita uusi profiili pelkän positioning-dokumentin ja CV:n pohjalta.
 
 ---
 

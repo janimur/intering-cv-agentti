@@ -16,6 +16,7 @@ from src.kirjoittajat import (
 )
 from src.pdf_reader import extract_text_from_pdf
 from src.schemas import PositioningDocument
+from tests._inputs import load_linkedin_text
 
 ROOT = Path(__file__).parent.parent
 POSITIONING_PATH = ROOT / "tests" / "output" / "positioning.json"
@@ -41,12 +42,18 @@ def main() -> None:
     cv_text = extract_text_from_pdf(str(CV_PATH))
     print(f"  CV-teksti: {len(cv_text)} merkkiä")
 
+    linkedin_text = load_linkedin_text()
+    if linkedin_text:
+        print(f"  LinkedIn-teksti: {len(linkedin_text)} merkkiä")
+    else:
+        print("  LinkedIn-tekstiä ei löytynyt — kirjoittajat saavat vain CV:n")
+
     results = {}
 
     # LinkedIn
     print("\n[1/3] Ajetaan LinkedIn-kirjoittaja (Opus 4.7)...")
     try:
-        linkedin = run_linkedin_writer(positioning, cv_text)
+        linkedin = run_linkedin_writer(positioning, cv_text, linkedin_text)
         LINKEDIN_OUT.write_text(linkedin.model_dump_json(indent=2), encoding="utf-8")
         print(f"  Tallennettu: {LINKEDIN_OUT}")
         print(f"  Headline ({len(linkedin.headline)} merkkiä): {linkedin.headline}")
@@ -60,7 +67,7 @@ def main() -> None:
     # CV
     print("\n[2/3] Ajetaan CV-kirjoittaja (Opus 4.7)...")
     try:
-        cv = run_cv_writer(positioning, cv_text)
+        cv = run_cv_writer(positioning, cv_text, linkedin_text)
         CV_OUT.write_text(cv.model_dump_json(indent=2), encoding="utf-8")
         print(f"  Tallennettu: {CV_OUT}")
         print(f"  Title: {cv.header.title}")
@@ -74,7 +81,7 @@ def main() -> None:
     # Intering
     print("\n[3/3] Ajetaan intering-kirjoittaja (Opus 4.7)...")
     try:
-        intering = run_intering_writer(positioning, cv_text)
+        intering = run_intering_writer(positioning, cv_text, linkedin_text)
         INTERING_OUT.write_text(intering.model_dump_json(indent=2), encoding="utf-8")
         print(f"  Tallennettu: {INTERING_OUT}")
         print(f"  Hook: {intering.hook}")

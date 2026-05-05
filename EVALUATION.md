@@ -2,57 +2,52 @@
 
 Päivämäärä: 2026-05-05
 Testihenkilö: Jani Muuronen
-Iteraatio: v2 (LinkedIn-prompti tiukennettu, CV-prompti tarkennettu, CV-malli vaihdettu Sonnetista Opus 4.7:ään)
+Iteraatio: v3 (LinkedIn-tekstin syöttäminen tuotantokäytön mukaiseksi inputiksi)
 
 ## 1. Olisiko Jani itse valmis lähettämään tämän LinkedIn-Aboutin asiakkaalle?
 
-Kyllä. About on 2000 merkkiä tasan, ei toistoa, ei itsearviointi-aloituksia, ei jargonia.
+Kyllä, ja edellisiin iteraatioihin verrattuna tämä versio on ratkaisevasti parempi: kirjoittaja sai inputtina Janin nykyisen LinkedIn-profiilin, ja tuotettu versio tunnistettavasti **säilyttää Janin äänen** mutta tekee siitä myyvemmän interim-toimeksiantoja varten.
 
-Vahva kohta: avauskoukku tekee työn ensimmäisellä lauseella — "€2.5M → €25M viidessä vuodessa, kannattavasti, täydellä P&L-vastuulla. Tämän tein Witted Megacorpissa CEO/GM-roolissa alihankintakonsultointiliiketoiminnalle — en konsulttina, vaan linjajohdossa." Numero, aikaväli, rooli, erottautuminen yhdessä ankkurissa.
+Vahva esimerkki Janin äänen säilymisestä: "Sama kaava ei toistu joka yrityksessä, mutta operaattorin ote toistuu." Tämä on Janin särmikästä tyyliä — ei geneeristä myyntipuhetta. Vastaavasti operaattori-framing on näyttöä, ei väitettä: "Otan linjavastuun, teen päätökset ja vastaan numeroista — en kirjoita raporttia ja jätä toteutusta muille."
 
-Vahva kohta toinen: kappaleet ovat täydentäviä, eivät toistavia. Avauskappale tekee väitteen, "Mitä teen" -kappale konkretisoi tilannetyypit, "Vahvin näyttö" -kappale laajentaa Witted-keissin yksityiskohdiksi (prosessit, hinnoittelu, neuvottelut, AI-koulutus) jotka eivät esiinny avauksessa. Erottautumistekijät esitetään näyttönä ("Rakennan konkreettiset järjestelmät — CRM-ERP-integraatiot, KPI-dashboardit, prosessit — enkä jätä Excel-mallia ja lähde"), ei väitteenä. Loppu sulkeutuu konkreettiseen toimintakutsuun: "Mitä etsin: 4–12 kuukauden interim-toimeksiantoja CEO/COO/CCO-roolissa..." + sähköposti ja puhelin.
+Vertailu Janin nykyiseen LinkedIniin osoittaa selkeitä parannuksia: nykyinen About on englanniksi, käyttää ➤ ja ★ -symboleja sekä geneeristä "When growth stalls..." -koukkua. Uusi versio on suomeksi (vastaa intering-vaatimusta), aloittaa kovalla numerolla ("Skaalasin... €2,5M:stä €25M:ään"), ei käytä symboleja ja päättyy konkreettiseen tilannelistalla varustettuun yhteydenottopyyntöön sähköposti mukana.
 
-Heikoin kohta tässä versiossa: "Tekninen tausta (ohjelmistoarkkitehti Tieto, Wipro, Saraware) yhdistettynä yli kymmenen vuoden P&L-johtamiseen tarkoittaa, että puhun samaa kieltä sekä teknisen tiimin että hallituksen kanssa." -lause on toimiva mutta voisi olla terävämpi — "puhun samaa kieltä" on kliseen rajoilla. Yksi pieni iteraatio voisi parantaa, mutta tämä ei estä lähetystä.
+Heikko kohta: About on 2127 merkkiä, 127 yli tavoitteen 2000. Sisältö on tiukka eikä ilmeistä karsittavaa ole — mutta evaluate.py raportoi varoituksen ja Janin halutessa lähettää LinkedIn-Aboutin täysin rajan sisälle, yksi pieni tiivistys on edessä.
 
 ## 2. Erottuuko CV interim-CV:nä?
 
-Kyllä, selvästi. Neljä signaalia:
+Kyllä. CV-output ei muuttunut merkittävästi LinkedIn-inputin lisäämisestä — se on jo aiemman iteraation laatua. Title on edelleen "B2B-palveluyritysten kasvun skaalaaja | Interim COO/CCO/CEO" (vakityö-CV ei korosta interim-statusta otsikossa), positioning_summary on toimeksiantokeskeinen, ja key_results on tilannetyyppikohtainen.
 
-Ensinnäkin nimikkeet ja jaksot ovat eksplisiittisesti interim: "Interim COO @ Tekai/Reactron (5/2024–5/2025)", "Interim CCO @ Taskmill (9/2025–12/2025)". Kaikki uusimmat roolit ovat alle 12 kuukauden mittaisia ja "Interim"-etuliite on otsikossa. Vakityö-CV ei korosta roolin väliaikaisuutta.
-
-Toiseksi positioning_summary on toimeksiantokeskeinen: "Skaalaan IT- ja tech-enabled palveluyrityksiä täydellä P&L-vastuulla. Kasvatin Witted Megacorpin alihankintaliiketoiminnan €2.5M:stä €25M:ään viidessä vuodessa CEO/GM-roolissa — en konsulttina, vaan linjajohdossa. Rakennan operatiiviset selkärangat spin-offeille, vien sijoituskierrokset maaliin ja rakennan datavetoiset myyntiorganisaatiot kun skaalaus ei onnistu." Tämä on myyntipuhe ostajalle, ei kuvaus pitkän linjan työnhausta.
-
-Kolmanneksi key_results on tilannetyyppikohtainen ja aikasidonnainen: "spin-offin operatiivinen selkäranka käyttöön alle 6 kuukaudessa", "DD-asiat suljettu 2 viikossa". Lyhyitä, määrällisiä projektisuoritteita.
-
-Neljänneksi vanhempi tekninen ura on tiivistetty `certifications`-osion yhdistelmälauseeseen: "Aiempi tekninen tausta (2005–2014): ohjelmistoarkkitehti ja pääprojektipäällikkö (yli 150 osallistujaa) GSM-verkkoelementtien kehityksessä — Tieto, Wipro, Saraware, Crelint, Houston Inc., Citrus Solutions; AR-yrittäjä Zibra Oy (2012–2020)." Tämä on rakenteellinen valinta joka erottaa interim-CV:n vakityö-CV:stä — vakityö-CV listaisi nämä omiksi rivikseen kronologisesti.
+LinkedIn-input vahvisti hieman positiointia ("B2B-palveluyritykset" sai etusijan "IT-palveluyritysten" sijaan), mikä on linjassa LinkedIn-headlinen "B2B-palveluyrityksille" -muotoilun kanssa. CV pysyi 5 roolissa kaikilla 2+ mitattavalla tuloksella, vanha tekninen ura yhdistelmälauseena certifications-osiossa.
 
 ## 3. Onko positiointidokumentti tarpeeksi terävä?
 
-On, ja se on edelleen vaiheen 1 selkein onnistuminen. Positiointidokumenttia ei tarvinnut iteroida — kartoittaja-prompti tuotti kerralla käyttökelpoisen lähtökohdan.
+On, ja LinkedIn-inputin lisäys teki siitä **olennaisesti rikkaamman** kuin pelkän CV:n + baselinen pohjalta. Konkreettiset parannukset:
 
-`target_situations` on poikkeuksellisen käyttökelpoinen: viisi tilannetyyppiä (skaalaus €2–30M, nearshore/offshore-käyttöönotto, spin-offin selkäranka 6kk, investor readiness, datavetoinen myyntimoottori) ovat toimeksiantolähtöisiä, eivät kompetenssikuvauksia. Kirjoittajat saivat näistä suoraan rakennusaineksia.
+- **Tone-kuvaus**: kartoittaja tunnisti LinkedIn-postauksista (mm. AI-keskustelut, Risto Murto -kommentti) Janin äänen: "rohkeasti eri mieltä, käytännönläheinen, hieman särmikäs, operaattorin ääni — ei advisor-pehmeyttä". Tätä signaalia ei tullut CV:stä.
+- **Uusi target_situation**: "Avainhenkilön äkillinen lähtö kasvuyrityksessä — väliaikainen linjavastuu samalla kun vakirekrytointi etenee". Tämä tuli LinkedInin "Open to work"-merkinnästä ja Featured-osion sanavalinnoista.
+- **Konkretisoitunut nearshore/offshore**: "rakentanut suomalais-vietnamilaisia toimintamalleja (Reactron, Tekai), tietää käytännössä mihin kiviin törmätään". Maantieteellinen yksityiskohta tuli LinkedInin Experience-osiosta.
+- **Hienovaraisemmat exclusions**: "Ei senior advisor -tyyppistä titteliä", "Ei ylimyydä Augmented Reality / Zibra -taustaa pääprofiilissa". Tarkemmat rajaukset jotka heijastavat Janin omia painotuksia.
 
-`differentiators` on selkeä ja erottuva: "Operaattori täydellä P&L-vastuulla €25M tasolla — johti liiketoimintaa CEO/GM-roolissa, ei tehnyt suosituksia konsulttina." Konkreettinen väite, ei adjektiivilista.
-
-`exclusions`-lista ohjaa tehokkaasti: "Ei käytetä 'auttoi', 'tuki', 'osallistui' -tyyppistä kieltä operatiivisissa rooleissa" näkyy lopputuloksissa — Aboutissa ja CV:ssä subjekti on Jani, verbit ovat aktiivimuodossa.
-
-Ainoa kriitti: positioning käyttää substantiivia "skaalaaja", joka voi kuulostaa konsulttiverkostosanalta. Ei kielletty lista, mutta jatkoiteraatiossa voisi harkita aktiiviverbiä ("skaalaan") substantiivin sijaan otsikoissa.
+Tämä on selkeä validointi sille että LinkedIn-input pitää olla tuotantoputken osa — ei optionaali kustannustavoite.
 
 ## 4. Mikä on heikoin lenkki?
 
-Tämän iteraation jälkeen heikointa lenkkiä on vaikea osoittaa — kaikki 12 evaluate.py-kriteeriä menevät OK ilman varoituksia. Suurin riski seuraavalle testihenkilölle:
+Kaksi havaintoa, kumpikaan ei kriittinen:
 
-**Kartoittajan ylivahvuus → riski toiselle testihenkilölle.** Kartoittaja toimii loistavasti Janin profiililla, mutta Janilla on poikkeuksellisen kvantifioitu lippulaivasaavutus (€2.5M → €25M). Jäsenelle, jolla on vähemmän selkeä numeronäyttö, kartoittaja saattaa joutua täyttämään `flagship_story.result_quantified` -kentän heikommilla luvuilla — ja kirjoittajat rakentavat tämän varaan. Tämä riski näkyy vasta kun ajetaan toista testihenkilöä.
+**About-pituuden hallinta tiukassa ohjauksessa epäonnistuu.** Promptissa on eksplisiittinen ohje "lyhennä alle 2000 merkkiin ennen tool-kutsua", mutta Opus 4.7 ylittää rajaa silloin kun lähdedataa on enemmän (LinkedIn-iteraatiossa 2127 merkkiä, edellisessä 2000 tasan, sitä edellisessä 2024). Promptti-tason kontrolli ei riitä — jos pituusraja halutaan ehdoton, tarvitaan joko schema-tason `max_length=2000` (joka pakottaa retryyn validointivirheessä) tai post-processing-vaihe joka leikkaa About-tekstin.
 
-**CV-promptin "tiivistä vanhat roolit" -ohje tukeutuu Opus 4.7:ään.** Aiempi iteraatio Sonnetilla osoitti, että sama prompti ei tuota samaa lopputulosta heikommalla mallilla — Sonnet jätti vajaita rooleja experienceen sen sijaan että tiivistäisi ne yhdistelmälauseiksi. Mallivalinta on osa promptisuunnittelua, ei erillinen päätös. Jatkossa tämä on muistettava jos kustannussyistä halutaan kokeilla halvempia malleja CV-pinoon.
+**LinkedIn-kirjoittajan rooli "myyvempi versio nykyisestä" toimi, mutta ei vielä eksplisiittisesti dokumentoidu.** Kirjoittaja tuotti aidosti paremman version, mutta lopputuotteessa ei ole vertailua nykyiseen ("muutin X koska Y") joka auttaisi Janille perustelemaan iteraatiokeskustelun: minkä takia uusi avauskoukku, miksi mitä etsin -kappale on muutettu. Tämä voisi olla jatkokehitys: lisätä `LinkedInOutput`-skemaan optional `improvements_summary`-kenttä jossa kirjoittaja perustelee 3–5 isointa muutosehdotusta.
 
 ## Tekniset huomiot vaiheen 1 toteutuksesta
 
-- **Kartoittaja**: Claude Opus 4.7 + adaptive thinking (`output_config.effort: "high"`) tuotti positioning-dokumentin jossa ei ollut yhtään tyhjää kenttää. Adaptive thinking auttoi erityisesti differentiator-erottelussa.
-- **API-rajoitukset thinking-tilassa**: Opus 4.7 + thinking ei tue `temperature`-parametria eikä `tool_choice={"type": "any"}`-pakotusta. Käytetään `tool_choice={"type": "auto"}` ja luotetaan promptin output-ohjeeseen — mallin yhteistyö toimi luotettavasti kaikilla testikerroilla.
-- **Mallivalinta**: alkuperäinen suunnitelma käytti Sonnet 4.5:ttä CV-pinossa kustannussyistä. Iteraatiossa vaihdettu Opus 4.7:ään, koska Sonnet ei noudattanut tarkennettua "mitattava tulos" -määritelmää (jätti vajaita rooleja experiencessa). Opus tiivistää vanhat roolit certifications-osion yhdistelmälauseeksi prompti-ohjeen mukaisesti.
-- **LinkedInOutput.about**: skema ei aseta ylärajaa, ainoastaan prompti. Iteraatiossa lisätty promptiin eksplisiittinen "lyhennä alle 2000 merkkiin ennen tool-kutsua" — Opus 4.7 noudatti rajaa täsmällisesti (2000 merkkiä tasan).
-- **CVDocument.experience.results**: schema-tason `min_length=2` toimi pakottavasti. Yhdistettynä prompti-ohjeeseen "ei mitattavissa olevia rivejä → jätä rooli pois" tuottaa luonnollisen ratkaisun ilman geneerisiä fallback-rivejä.
-- **evaluate.py**: 12 kriteeriä, exit-koodi 0 Janin testidatalla v2-iteraatiossa. Aiempi v1-iteraatio: 1 VAROITUS (about 2024 merkkiä). v2: 0 varoitusta.
-- **Kiellettyjen sanojen regex**: `\bskaalata\b` ei osu sallittuihin muotoihin "skaalaaja", "skaalannut", "skaalasin" — toimii oikein.
-- **Iteraatiokustannus**: kaikki kolme kirjoittajaa Opus 4.7:llä on noin 2× kalliimpi kuin Sonnet-CV-versio. Hyväksyttävä toimitusprojektissa, jossa promptien laatu määrää tuotteen laadun.
+- **Kartoittaja**: Claude Opus 4.7 + adaptive thinking (`output_config.effort: "high"`) tuotti positioning-dokumentin jossa ei ollut yhtään tyhjää kenttää. LinkedIn-input rikastutti tone-kuvausta ja lisäsi target_situation-vaihtoehtoja merkittävästi.
+- **API-rajoitukset thinking-tilassa**: Opus 4.7 + thinking ei tue `temperature`-parametria eikä `tool_choice={"type": "any"}`-pakotusta. Käytetään `tool_choice={"type": "auto"}` ja luotetaan promptin output-ohjeeseen.
+- **Mallivalinta**: kaikki kolme kirjoittajaa Opus 4.7:llä. Iteraatiossa v2 vaihdettu CV-malli Sonnetista Opukseen, koska Sonnet ei noudattanut tarkennettua "mitattava tulos" -määritelmää.
+- **Inputin rakenne**: tuotantokoodi (`run_kartoittaja`, `run_*_writer`) ottaa CV-tekstin pakollisena ja LinkedIn-tekstin optionaalisena. Baseline.md on testikäyttöä varten ja oletuksena pois — `USE_BASELINE=1` -ympäristömuuttuja kytkee sen päälle.
+- **Lähteiden ristiriidat**: kartoittaja-prompti ohjaa luottamaan CV:hen kun lähteet ovat ristiriidassa. LinkedIn-input vaikuttaa painopisteisiin ja äänensävyyn, ei rooleihin tai vuosilukuihin.
+- **LinkedInOutput.about**: schema ei aseta ylärajaa. Promptin "lyhennä alle 2000" -ohje pitää ~50–60 % ajoista. v3-iteraatiossa LinkedIn-input rikastutti syötteen niin että lopputuotos on 2127 merkkiä — yli rajan, mutta sisältö tiukka.
+- **CVDocument.experience.results**: schema-tason `min_length=2` toimii pakottavasti yhdessä prompti-ohjeen kanssa. Vanhat roolit tiivistetään `certifications`-osion yhdistelmälauseeksi, ei jätetä experienceen täytettävinä riveinä.
+- **evaluate.py**: 12 kriteeriä, exit-koodi 0 kun vain VAROITUS:ia. v3-iteraatio: 0 epäonnistunutta, 1 varoitus (About-pituus).
+- **Kustannus**: kaikki kolme kirjoittajaa + kartoittaja Opus 4.7:llä, ja LinkedIn-input pidentää syötettä. Yksi täysi ajo Janin profiilille on edelleen alle €0.50 — toimitusprojektissa hyväksyttävä.
+- **Iteraatiohistoria**: v1 (Sonnet-CV, ei LinkedIn): 1 VAROITUS About 2024. v2 (Opus-CV, ei LinkedIn): 0 VAROITUS, About 2000 tasan. v3 (Opus-CV + LinkedIn-input): 1 VAROITUS About 2127, mutta sisältö olennaisesti parempi (Janin oma ääni säilyy, tilannetyypit konkretisoituvat).

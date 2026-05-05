@@ -6,10 +6,18 @@ from src.schemas import PositioningDocument, to_tool_input_schema
 PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "kartoittaja_system.md"
 
 
-def run_kartoittaja(baseline_text: str, cv_text: str) -> PositioningDocument:
+def run_kartoittaja(
+    cv_text: str,
+    linkedin_text: str | None = None,
+    baseline_text: str | None = None,
+) -> PositioningDocument:
     """
     Ajaa kartoittaja-agentin Claude Opus 4.7:llä adaptive thinking päällä.
     Palauttaa validoidun PositioningDocument-objektin.
+
+    Tuotannossa input on cv_text + (mahdollisesti) linkedin_text.
+    baseline_text on testikäyttöä varten, jossa lisämateriaali on käsin koottua.
+    Jos lähteet ovat ristiriidassa, prompti ohjaa luottamaan CV:hen.
 
     Huomio: Opus 4.7 käyttää adaptive thinkingiä ja output_config.effort -kontrollia.
     Temperature=1 koska thinking vaatii sen.
@@ -17,10 +25,12 @@ def run_kartoittaja(baseline_text: str, cv_text: str) -> PositioningDocument:
     client = Anthropic()
     system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
 
-    user_content = (
-        f"## Henkilön perustiedot\n\n{baseline_text}\n\n"
-        f"## CV-teksti\n\n{cv_text}"
-    )
+    sections = [f"## CV-teksti\n\n{cv_text}"]
+    if linkedin_text:
+        sections.append(f"## LinkedIn-profiilin teksti (nykyinen)\n\n{linkedin_text}")
+    if baseline_text:
+        sections.append(f"## Lisämateriaali (perustiedot)\n\n{baseline_text}")
+    user_content = "\n\n".join(sections)
 
     response = client.messages.create(
         model="claude-opus-4-7",

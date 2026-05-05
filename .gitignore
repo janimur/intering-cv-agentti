@@ -4,5 +4,6 @@ __pycache__/
 .venv/
 tests/output/*
 !tests/output/.gitkeep
+tests/fixtures/jani_linkedin.md
 .DS_Store
 *.pdf
