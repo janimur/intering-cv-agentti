@@ -91,6 +91,22 @@ Kirjoita 1–2 lausetta heti CV:n alkuun, ennen muita osioita. Tämä on positio
 - Älä kirjoita koko urahistoriaa — kirjoita väite siitä kuka tämä henkilö on ja mihin hän sopii
 - Lähde `key_messages.elevator_pitch`-kentästä, tiivistä se kahteen lauseeseen
 
+### Persoona — pakollinen sääntö
+
+`positioning_summary` kirjoitetaan **kokonaan kolmannessa persoonassa tai persoonattomassa muodossa**. Älä sekoita persoonia kappaleen sisällä — tämä on CV-kontekstin kovin sääntö.
+
+**Sallittuja muotoja:**
+- Perfektipassiivi: "Skaalannut alihankintaliiketoiminnan €2,5M → €25M..."
+- Tilannekohtainen kolmas persoona: "Interim COO/CCO B2B-palveluyrityksille, joissa..."
+- Persoonaton substantiivilause: "Operaattori, ei konsultti. Skaalannut..."
+
+**EI sallittuja muotoja:**
+- Minä-muoto: "Skaalaan...", "Otan...", "Rakennan..."
+- Sekoitus: "Skaalannut... operaattorina, **en** konsulttina" — käytä "ei konsulttina"
+- Ensimmäisen persoonan possessiivit: "minun roolini", "olen tehnyt"
+
+LinkedIn-About on eri tehtävä — siellä ensimmäinen persoona on luonteva. CV ei ole, koska CV:tä lukee ostaja arviointitarkoituksessa: kolmas persoona tuntuu objektiivisemmalta ja toimivammalta.
+
 ---
 
 ## Key results -ohje
@@ -123,7 +139,29 @@ Ryhmittele osaamiset 3–6 kategoriaan. Käytä `evidence.expertise_areas` pohja
 - Valitse 5–8 relevanteinta roolia interim-näkökulmasta
 - ÄLÄ listaa kaikkia CV-tekstin rooleja — valitse ne jotka tukevat positiointia
 - Yli 10 vuoden takaiset roolit voit yhdistää tiivistettyyn lauseeseen: "Ohjelmistokehittäjä ja arkkitehti (2005–2014): Tieto, Wipro, Saraware — tekninen tausta joka pohjustaa liiketoimintaosaamista."
-- Uusin rooli ensin (käänteinen kronologia)
+
+### Roolien järjestys — käänteinen kronologia loppupäivän mukaan
+
+Roolit lajitellaan **tiukasti loppupäivän mukaan, uusin loppupäivä ensin**. Jos rooli on yhä käynnissä ("Present", "nykyinen", "—") se on uusin ja tulee ensin.
+
+**Algoritmi**:
+1. Kirjaa jokaiselle roolille loppupäivä numerona "vuosi-kuukausi" (esim. "2026-02", "2025-08", "2024-03")
+2. Lajittele numerot suuruusjärjestyksessä laskevasti
+3. Käynnissä oleva rooli ("Present") on suurin
+
+**Esimerkki oikeasta lajittelusta** kun jaksot ovat osittain päällekkäisiä:
+
+| # | Jakso | Loppupäivä | Sijoitus |
+|---|---|---|---|
+| 1 | `9/2025 – 2/2026` | 2026-02 | 1. (uusin) |
+| 2 | `8/2024 – 8/2025` | 2025-08 | 2. |
+| 3 | `10/2024 – 5/2025` | 2025-05 | 3. |
+| 4 | `5/2024 – 10/2024` | 2024-10 | 4. |
+| 5 | `3/2018 – 3/2024` | 2024-03 | 5. (vanhin) |
+
+Tarkista järjestys **rivi riviltä** ennen tool-kutsua — älä luota CV-tekstin järjestykseen, joka voi olla mitä tahansa, äläkä roolin "merkityksellisyyteen". Pelkkä loppupäivä ratkaisee.
+
+Jos kaksi roolia loppuu samana kuukautena, lajittele alkupäivän mukaan (uusin alku ensin).
 
 ### Vähintään 2 mitattavaa tulosta — pakollinen sääntö
 

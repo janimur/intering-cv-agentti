@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ doc.header.name }} — CV</title>
+    <style>
+        @font-face {
+            font-family: 'Inter';
+            src: url('file:///{{ font_dir }}/Inter-Regular.ttf') format('truetype');
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: 'Inter';
+            src: url('file:///{{ font_dir }}/Inter-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+        }
+        @page {
+            size: A4;
+            margin: 18mm;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.45;
+            color: #000;
+            margin: 0;
+        }
+        h1 { font-size: 20pt; font-weight: 600; margin: 0 0 2pt 0; }
+        h2 { font-size: 11pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5pt; margin: 14pt 0 6pt 0; border-bottom: 1pt solid #000; padding-bottom: 3pt; }
+        .muted { color: #555; }
+        .title { font-size: 11pt; color: #555; margin: 0 0 4pt 0; }
+        .contact { font-size: 9pt; color: #555; }
+        .summary { font-style: italic; margin: 8pt 0 0 0; }
+        ul { padding-left: 14pt; margin: 4pt 0; }
+        li { margin-bottom: 2pt; }
+        .role-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 8pt; }
+        .role-row .role { font-weight: 600; font-size: 11pt; }
+        .role-row .period { color: #555; font-size: 9pt; }
+        .role-row .company { color: #555; font-size: 10pt; }
+        .role-context { font-style: italic; color: #555; margin: 1pt 0 3pt 0; font-size: 10pt; }
+        .expertise-grid { display: grid; grid-template-columns: 1fr; gap: 3pt; }
+    </style>
+</head>
+<body>
+    {# HEADER #}
+    <header>
+        <h1>{{ doc.header.name }}</h1>
+        <p class="title">{{ doc.header.title }}</p>
+        <p class="contact">
+            {%- set parts = [] -%}
+            {%- if doc.header.contact.email %}{% set _ = parts.append(doc.header.contact.email) %}{% endif -%}
+            {%- if doc.header.contact.phone %}{% set _ = parts.append(doc.header.contact.phone) %}{% endif -%}
+            {%- if doc.header.contact.location %}{% set _ = parts.append(doc.header.contact.location) %}{% endif -%}
+            {%- if doc.header.contact.linkedin %}{% set _ = parts.append(doc.header.contact.linkedin) %}{% endif -%}
+            {{ parts | join(' · ') }}
+        </p>
+        <p class="summary">{{ doc.positioning_summary }}</p>
+    </header>
+
+    {# KEY RESULTS #}
+    <section>
+        <h2>Keskeiset tulokset</h2>
+        <ul>
+        {% for r in doc.key_results %}
+            <li>{{ r }}</li>
+        {% endfor %}
+        </ul>
+    </section>
+
+    {# EXPERTISE #}
+    <section>
+        <h2>Osaamisalueet</h2>
+        <div class="expertise-grid">
+        {% for e in doc.expertise %}
+            <div>{{ e }}</div>
+        {% endfor %}
+        </div>
+    </section>
+
+    {# EXPERIENCE #}
+    <section>
+        <h2>Työkokemus</h2>
+        {% for entry in doc.experience %}
+            <div class="role-row">
+                <span class="role">{{ entry.role }}</span>
+                <span class="period">{{ entry.period }}</span>
+            </div>
+            <div class="company">{{ entry.company }}</div>
+            <div class="role-context">{{ entry.context }}</div>
+            <ul>
+            {% for r in entry.results %}
+                <li>{{ r }}</li>
+            {% endfor %}
+            </ul>
+        {% endfor %}
+    </section>
+
+    {# EDUCATION #}
+    {% if doc.education %}
+    <section>
+        <h2>Koulutus</h2>
+        <ul>
+        {% for e in doc.education %}
+            <li>{{ e }}</li>
+        {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    {# CERTIFICATIONS #}
+    {% if doc.certifications %}
+    <section>
+        <h2>Sertifioinnit ja muut</h2>
+        <ul>
+        {% for c in doc.certifications %}
+            <li>{{ c }}</li>
+        {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+</body>
+</html>
