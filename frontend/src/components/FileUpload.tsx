@@ -62,7 +62,7 @@ export function FileUpload({
         ) : (
           <>
             <p className="text-sm text-gray-500">
-              Vedä tiedosto tahan tai klikkaa valitaksesi
+              Vedä tiedosto tähän tai klikkaa valitaksesi
             </p>
             <p className="text-xs text-gray-400 mt-1">PDF</p>
           </>

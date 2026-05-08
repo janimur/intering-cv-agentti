@@ -41,7 +41,7 @@ export function WritersPage({ onBack, onContinue }: WritersPageProps) {
     <div>
       <h1 className="text-3xl font-semibold text-gray-900 mb-2">Kirjoittajat</h1>
       <p className="text-gray-500 text-sm mb-6">
-        Aja kirjoittajat haluamassasi jarjestyksessa. Voit iteroida tuloksia
+        Aja kirjoittajat haluamassasi järjestyksessä. Voit iteroida tuloksia
         ennen jatkamista.
       </p>
 
@@ -51,7 +51,7 @@ export function WritersPage({ onBack, onContinue }: WritersPageProps) {
         </p>
       )}
 
-      <div className="grid gap-4 mb-6 md:grid-cols-1 lg:grid-cols-3">
+      <div className="space-y-4 mb-6">
         <WriterCard
           type="linkedin"
           output={linkedinOutput}

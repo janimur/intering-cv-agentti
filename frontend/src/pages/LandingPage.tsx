@@ -18,7 +18,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
         Intering-profiilin.
       </p>
       <p className="text-gray-500 text-sm mb-8">
-        Prosessi kestaa noin 2-4 minuuttia. Voit muokata tuloksia ennen
+        Prosessi kestää noin 2–4 minuuttia. Voit muokata tuloksia ennen
         julkaisemista.
       </p>
       <button
@@ -30,7 +30,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
       </button>
       {!gdprAccepted && (
         <p className="text-xs text-gray-400 mt-2">
-          Hyvaksy tietosuoja jatkaaksesi
+          Hyväksy tietosuoja jatkaaksesi
         </p>
       )}
     </div>

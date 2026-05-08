@@ -40,7 +40,7 @@ export function PositioningPage({ onBack, onContinue }: PositioningPageProps) {
       setLocalDoc(result);
     } catch (err) {
       const msg =
-        err instanceof ApiError ? err.detail : "Kartoittajan ajo epaonnistui";
+        err instanceof ApiError ? err.detail : "Kartoittajan ajo epäonnistui";
       setError("positioning", msg);
     } finally {
       setLoading("positioning", false);
@@ -60,7 +60,7 @@ export function PositioningPage({ onBack, onContinue }: PositioningPageProps) {
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
       const msg =
-        err instanceof ApiError ? err.detail : "Tallentaminen epaonnistui";
+        err instanceof ApiError ? err.detail : "Tallentaminen epäonnistui";
       setError("positioning", msg);
     } finally {
       setLoading("positioning", false);
@@ -71,7 +71,7 @@ export function PositioningPage({ onBack, onContinue }: PositioningPageProps) {
     <div>
       <SpinnerOverlay
         visible={isRunning}
-        message="Kartoittaja analysoi materiaalia, tama kestaa 30-60 sekuntia..."
+        message="Kartoittaja analysoi materiaalia, tämä kestää 30–60 sekuntia..."
       />
 
       <h1 className="text-3xl font-semibold text-gray-900 mb-2">

@@ -54,7 +54,7 @@ function CvSection({
       URL.revokeObjectURL(url);
     } catch (err) {
       const msg =
-        err instanceof ApiError ? err.detail : "PDF-lataus epaonnistui";
+        err instanceof ApiError ? err.detail : "PDF-lataus epäonnistui";
       onPdfError(msg);
     }
   };
@@ -84,12 +84,14 @@ function CvSection({
       />
 
       <div className="mb-4">
-        <span className="text-sm font-medium text-gray-700">
+        <span className="text-sm font-medium text-gray-700 block mb-2">
           Avaintulokset ({output.key_results.length})
         </span>
-        {output.key_results.map((r, i) => (
-          <CopyField key={i} label={`Tulos ${i + 1}`} text={r} />
-        ))}
+        <ul className="list-disc pl-5 text-sm text-gray-800 space-y-1 bg-gray-50 border border-gray-200 rounded p-3">
+          {output.key_results.map((r, i) => (
+            <li key={i}>{r}</li>
+          ))}
+        </ul>
       </div>
 
       <div className="mb-4">
@@ -110,7 +112,7 @@ function CvSection({
 
       <div className="mb-4">
         <span className="text-sm font-medium text-gray-700 block mb-2">
-          Tyokokemus ({output.experience.length})
+          Työkokemus ({output.experience.length})
         </span>
         {output.experience.map((exp, i) => (
           <div

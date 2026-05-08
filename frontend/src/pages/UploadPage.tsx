@@ -38,7 +38,7 @@ export function UploadPage({ onBack, onUploaded }: UploadPageProps) {
       setLinkedinAvailable(result.linkedin_available);
       onUploaded();
     } catch (err) {
-      const msg = err instanceof ApiError ? err.detail : "Tiedostojen lataus epaonnistui";
+      const msg = err instanceof ApiError ? err.detail : "Tiedostojen lataus epäonnistui";
       setError("upload", msg);
     } finally {
       setLoading("upload", false);
@@ -66,8 +66,8 @@ export function UploadPage({ onBack, onUploaded }: UploadPageProps) {
             LinkedIn-tiedot (valinnainen)
           </h2>
           <p className="text-sm text-gray-500 mb-3">
-            Voit ladata LinkedIn-profiilin PDF:na tai liittaa tekstin alla
-            olevaan kenttaan.
+            Voit ladata LinkedIn-profiilin PDF:nä tai liittää tekstin alla
+            olevaan kenttään.
           </p>
 
           <FileUpload
@@ -78,12 +78,12 @@ export function UploadPage({ onBack, onUploaded }: UploadPageProps) {
 
           <div className="mt-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              TAI liita LinkedIn-teksti tahan
+              TAI liitä LinkedIn-teksti tähän
             </label>
             <textarea
               value={linkedinText}
               onChange={(e) => setLinkedinText(e.target.value)}
-              placeholder="Kopioi LinkedIn-profiilisi teksti tahan..."
+              placeholder="Kopioi LinkedIn-profiilisi teksti tähän..."
               rows={8}
               className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
