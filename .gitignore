@@ -7,3 +7,4 @@ tests/output/*
 tests/fixtures/jani_linkedin.md
 .DS_Store
 *.pdf
+data/
