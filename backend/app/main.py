@@ -9,17 +9,22 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 from backend.app.metrics import init_db
+from backend.app.pdf_renderer import start_browser, stop_browser
 from backend.app.sessions import SessionStore
-from backend.app.api import admin, gdpr, positioning, upload, writers
+from backend.app.api import admin, cv_pdf, gdpr, positioning, upload, writers
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Käynnistys: alusta tietokanta ja sessiovarasto
+    # Käynnistys: alusta tietokanta, sessiovarasto ja Playwright-selain
     init_db()
     app.state.session_store = SessionStore()
+    playwright, browser = await start_browser()
+    app.state.playwright = playwright
+    app.state.browser = browser
     yield
-    # Sammutus: in-memory sessiot häviävät automaattisesti
+    # Sammutus: sulje selain ja Playwright
+    await stop_browser(app.state.playwright, app.state.browser)
 
 
 app = FastAPI(title="Intering CV-agentti", lifespan=lifespan)
@@ -37,5 +42,6 @@ app.add_middleware(
 app.include_router(upload.router, tags=["upload"])
 app.include_router(positioning.router, tags=["positioning"])
 app.include_router(writers.router, tags=["writers"])
+app.include_router(cv_pdf.router, tags=["pdf"])
 app.include_router(admin.router, tags=["admin"])
 app.include_router(gdpr.router, tags=["gdpr"])
