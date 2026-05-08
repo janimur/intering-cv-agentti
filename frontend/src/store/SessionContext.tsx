@@ -42,7 +42,12 @@ interface SessionContextValue extends SessionState {
   resetSession: () => void;
 }
 
-const STORAGE_KEY = "intering_session";
+// Persistoidaan localStorage:een VAIN GDPR-hyväksyntä jotta käyttäjän
+// ei tarvitse hyväksyä uudestaan jokaisella latauksella. Kaikki muu data
+// (sessionId, output:t, positioning) on aina muistissa ja nollautuu kun
+// sivu ladataan — tämä pitää frontendin synkassa backendin in-memory-
+// session kanssa, joka katoaa palvelimen uudelleenkäynnistyksessä.
+const GDPR_KEY = "intering_gdpr_accepted";
 
 const initialState: SessionState = {
   sessionId: null,
@@ -67,22 +72,16 @@ const initialState: SessionState = {
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<SessionState>(() => {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        return { ...initialState, ...JSON.parse(stored) };
-      } catch {
-        return initialState;
-      }
-    }
-    return initialState;
-  });
+  const [state, setState] = useState<SessionState>(() => ({
+    ...initialState,
+    gdprAccepted: localStorage.getItem(GDPR_KEY) === "1",
+  }));
 
   useEffect(() => {
-    const { isLoading: _isLoading, errors: _errors, ...persisted } = state;
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
-  }, [state]);
+    if (state.gdprAccepted) {
+      localStorage.setItem(GDPR_KEY, "1");
+    }
+  }, [state.gdprAccepted]);
 
   const value: SessionContextValue = {
     ...state,
@@ -106,8 +105,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setState((s) => ({ ...s, errors: { ...s.errors, [key]: value } })),
     acceptGdpr: () => setState((s) => ({ ...s, gdprAccepted: true })),
     resetSession: () => {
-      sessionStorage.removeItem(STORAGE_KEY);
-      setState(initialState);
+      // Säilytä gdpr-hyväksyntä, nollaa kaikki muu
+      setState({ ...initialState, gdprAccepted: state.gdprAccepted });
     },
   };
 
