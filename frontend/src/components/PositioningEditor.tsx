@@ -48,7 +48,7 @@ function StringListEditor({ label, items, onChange }: StringListEditorProps) {
         onClick={addItem}
         className="text-xs px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 mt-1"
       >
-        + Lisaa
+        + Lisää
       </button>
     </div>
   );
@@ -77,7 +77,7 @@ export function PositioningEditor({
         <h3 className="text-lg font-medium text-gray-900 mb-3">Positiointi</h3>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Paakulmavi (primary angle)
+            Positiointikulma (primary angle)
           </label>
           <textarea
             value={pos.primary_angle}
@@ -97,7 +97,7 @@ export function PositioningEditor({
           onChange={(v) => update("positioning.target_situations", v)}
         />
         <StringListEditor
-          label="Erottautumistekijat (differentiators)"
+          label="Erottautumistekijät (differentiators)"
           items={pos.differentiators}
           onChange={(v) => update("positioning.differentiators", v)}
         />
@@ -105,7 +105,7 @@ export function PositioningEditor({
 
       <section>
         <h3 className="text-lg font-medium text-gray-900 mb-3">
-          Paatarina (flagship story)
+          Päätarina (flagship story)
         </h3>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">

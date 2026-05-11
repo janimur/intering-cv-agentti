@@ -122,25 +122,35 @@ Parempi: "Rakennan datavetoisen myyntimoottorin: ICP-määritelmä, pipeline-vai
 
 ## Profile sections -ohje
 
-`profile_sections` on sanakirja jossa avaimet ovat osioiden nimet ja arvot ovat osioiden tekstit.
+`profile_sections` on sanakirja jossa avaimet ovat intering.fi-profiilin osioiden otsikoita ja arvot ovat osioiden tekstit. Käytä **täsmälleen näitä avaimia** (suomenkielisinä otsikoina sellaisenaan, kysymysmerkit ja välilyönnit mukana):
 
 ### Pakolliset avaimet
 
-- `"kokemus"` — tiivis kertomus ydinkokemuksesta
-- `"vahvuudet"` — erottautumistekijät luonnollisina lauseina
-- `"mita_etsin"` — selkeä kuvaus haettavasta toimeksiannosta
+1. `"Kuka minä olen?"` — kuka tämä henkilö on ammatillisesti ja mikä on hänen positionsa interim-markkinoilla
+2. `"Miksi juuri minä olen timanttinen interim?"` — erottautumistekijät, miksi ostaja valitsee juuri tämän henkilön geneerisen interim-johtajan sijaan
+3. `"Tehtävät joihin sovin parhaiten"` — konkreettiset tilannetyypit ja toimeksiantotyypit joihin tämä henkilö sopii
+4. `"Aikaisempi kokemus"` — yleinen ammatillinen tausta ja relevantti urahistoria
+5. `"Aikaisempi Interim-kokemus"` — spesifisti interim-roolit ja niiden mitattavat tulokset
 
-### Kokemus
+### Kuka minä olen?
 
-Ei kaikkea — painotetut palat. 2–4 lausetta. Kerro mikä tilanne toistuu useimmiten jäsenen urassa ja mikä on paras mitattava näyttö. Lähde `evidence.flagship_story` ja `evidence.supporting_results` -kentistä, mutta tiivistä — älä kopioi.
+2–4 lausetta. Avaa nykyinen positio ja tausta lyhyesti. Lähde: `positioning.primary_angle` + `evidence.expertise_areas`. Kirjoita ensimmäisessä persoonassa ("Olen…", "Toimin…") — tämä on jäsenen oma esittely intering-yhteisön sisällä.
 
-### Vahvuudet
+### Miksi juuri minä olen timanttinen interim?
 
-3–5 erottautumistekijää luonnollisina lauseina, ei bullet-listana. Lähde `positioning.differentiators`-kentästä. Kirjoita ne kertomuksena: "Tekninen tausta yhdistettynä P&L-johtamiseen tarkoittaa, että ymmärrän sekä kehittäjien että hallituksen kielen." — ei "Tekninen tausta + liiketoimintaosaaminen".
+3–5 lausetta. Lähde: `positioning.differentiators`. Kirjoita kertomuksena, ei bullet-listana. Esimerkki: "Tekninen tausta yhdistettynä P&L-johtamiseen tarkoittaa, että ymmärrän sekä kehittäjien että hallituksen kielen — siksi rakennan ratkaisuja jotka kestävät, en pelkkiä raportteja."
 
-### Mitä etsin
+### Tehtävät joihin sovin parhaiten
 
-Konkreettisesti: tilannetyyppi + yrityskoko + mandaatin kesto. Esimerkki: "Etsin 3–9 kuukauden interim-toimeksiantoja IT-palveluliiketoiminnan skaalausvaiheessa tai spin-off-tilanteessa, tyypillisesti €5–€30M liikevaihtoluokassa." Lähde `positioning.target_situations` ja `positioning.target_buyers` -kentistä.
+Konkreettisesti: tilannetyyppi + yrityskoko + mandaatin kesto. Lähde: `positioning.target_situations` ja `positioning.target_buyers`. 3–6 tilannetyyppiä. Voi käyttää lyhyttä bullet-listaa tai luontevaa kertovaa muotoa.
+
+### Aikaisempi kokemus
+
+2–4 lausetta. Yleinen urakaari painottaen interim-relevantteja tulosjaksoja. Mainitse keskeisimmät yritykset ja vastuut, mutta älä toista CV:tä. Lähde: `evidence.flagship_story` ja `evidence.supporting_results` -kentistä, tiivistä — älä kopioi.
+
+### Aikaisempi Interim-kokemus
+
+2–4 lausetta tai lyhyt lista. Spesifisti interim-roolit (ei vakityö), nimikkeet, yritykset ja mitattavat tulokset per rooli. Jos jäsenellä ei ole vielä interim-rooleja, käytä rinnasteisia "operaattorin rooleissa täydellä P&L-vastuulla" -tyyppisiä muotoiluja. Lähde: `evidence.supporting_results`.
 
 ---
 
@@ -152,4 +162,9 @@ Kentät:
 
 - `hook` (str) — pipe-formaatti, täsmälleen 4 osaa
 - `product_cards` (list[str]) — 2–3 korttia, jokainen on kokonainen tekstikappale
-- `profile_sections` (dict[str, str]) — pakolliset avaimet: `"kokemus"`, `"vahvuudet"`, `"mita_etsin"`
+- `profile_sections` (dict[str, str]) — pakolliset avaimet täsmälleen näinä merkkijonoina (kysymysmerkit, välilyönnit ja iso alkukirjain mukana):
+  - `"Kuka minä olen?"`
+  - `"Miksi juuri minä olen timanttinen interim?"`
+  - `"Tehtävät joihin sovin parhaiten"`
+  - `"Aikaisempi kokemus"`
+  - `"Aikaisempi Interim-kokemus"`
