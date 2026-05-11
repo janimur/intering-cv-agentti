@@ -127,6 +127,20 @@ Yhteiset säännöt kaikille kirjoittajille:
 
 Exit-koodi `0` jos kaikki OK (varoitukset sallitaan), `1` jos vähintään yksi epäonnistuu.
 
+## Testien ajaminen
+
+Yksikkötestit ja API-testit (nopeita, ei tee oikeita LLM-kutsuja):
+```bash
+uv run pytest tests/unit tests/api
+```
+
+Manuaaliset integraatio-ajot (tekevät oikeita Anthropic-kutsuja, vaatii ANTHROPIC_API_KEY):
+```bash
+uv run python tests/test_kartoittaja.py
+uv run python tests/test_kirjoittajat.py
+uv run python evaluate.py
+```
+
 ## Tunnetut rajoitukset
 
 - **About-pituus**: prompti ohjaa "alle 2000 merkkiä", mutta Opus 4.7 ylittää rajan ajoittain (ks. EVALUATION.md). Schema-tason `max_length` voisi pakottaa retryyn — ei toteutettu tässä vaiheessa.
