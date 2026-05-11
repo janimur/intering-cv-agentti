@@ -129,9 +129,14 @@ Exit-koodi `0` jos kaikki OK (varoitukset sallitaan), `1` jos vähintään yksi 
 
 ## Testien ajaminen
 
-Yksikkötestit ja API-testit (nopeita, ei tee oikeita LLM-kutsuja):
+Backend-yksikkötestit ja API-testit (nopeita, ei tee oikeita LLM-kutsuja):
 ```bash
 uv run pytest tests/unit tests/api
+```
+
+Frontend-yksikkötestit:
+```bash
+cd frontend && npm test
 ```
 
 Manuaaliset integraatio-ajot (tekevät oikeita Anthropic-kutsuja, vaatii ANTHROPIC_API_KEY):
