@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DATA_DIR=/data
+    volumes:
+      - metrics_data:/data
+    networks:
+      - internal
+    expose:
+      - "8000"
+
+  frontend-builder:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - frontend_dist:/output
+    networks:
+      - internal
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - frontend_dist:/srv/www:ro
+    networks:
+      - internal
+    depends_on:
+      backend:
+        condition: service_started
+      frontend-builder:
+        condition: service_completed_successfully
+
+volumes:
+  metrics_data:
+  frontend_dist:
+
+networks:
+  internal:

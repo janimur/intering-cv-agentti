@@ -1,0 +1,19 @@
+# Repo-juuren .dockerignore (backendin contextia varten)
+.git
+.venv
+__pycache__
+*.pyc
+.env
+node_modules
+frontend/
+tests/output/
+tests/fixtures/
+tmp/
+data/
+.githooks/
+.DS_Store
+*.md
+!README.md
+!HANDOVER.md
+!EVALUATION.md
+prompts/.gitkeep
