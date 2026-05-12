@@ -26,29 +26,33 @@ function gdprWrapper({ children }: { children: ReactNode }) {
   );
 }
 
-
 describe('LandingPage', () => {
-  it('renderöi otsikon', () => {
+  it('renderöi pää-otsikon', () => {
     render(<LandingPage onStart={vi.fn()} />, { wrapper: noGdprWrapper });
-    expect(
-      screen.getByText('Myyvempi CV interim-toimeksiantoihin')
-    ).toBeInTheDocument();
+    // Hero-otsikko renderöityy h1-elementtinä
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading.textContent).toContain('Myyvempi CV');
+    expect(heading.textContent).toContain('interim-toimeksiantoihin');
   });
 
-  it('renderöi "Aloita"-painikkeen', () => {
+  it('renderöi useita "Aloita"-painikkeita (hero + CTA-palkki)', () => {
     render(<LandingPage onStart={vi.fn()} />, { wrapper: noGdprWrapper });
-    expect(screen.getByText('Aloita')).toBeInTheDocument();
+    const buttons = screen.getAllByRole('button', { name: 'Aloita' });
+    expect(buttons.length).toBeGreaterThan(0);
   });
 
-  it('"Aloita"-painike on disabloitu kun gdprAccepted=false', () => {
+  it('"Aloita"-painikkeet ovat disabloituja kun gdprAccepted=false', () => {
     render(<LandingPage onStart={vi.fn()} />, { wrapper: noGdprWrapper });
-    expect(screen.getByText('Aloita')).toBeDisabled();
+    const buttons = screen.getAllByRole('button', { name: 'Aloita' });
+    buttons.forEach((btn) => expect(btn).toBeDisabled());
   });
 
-  it('"Aloita"-painike on enabloitu kun gdprAccepted=true', async () => {
+  it('"Aloita"-painikkeet ovat enabloituja kun gdprAccepted=true', async () => {
     render(<LandingPage onStart={vi.fn()} />, { wrapper: gdprWrapper });
-    await screen.findByRole('button', { name: 'Aloita' });
-    expect(screen.getByText('Aloita')).not.toBeDisabled();
+    // GdprSetter triggeröi acceptGdpr useEffectissa — odotetaan että painikkeet on enabloitu
+    await screen.findAllByRole('button', { name: 'Aloita' });
+    const buttons = screen.getAllByRole('button', { name: 'Aloita' });
+    buttons.forEach((btn) => expect(btn).not.toBeDisabled());
   });
 
   it('klikkaus kutsuu onStart-propin', async () => {
@@ -56,8 +60,9 @@ describe('LandingPage', () => {
     const onStart = vi.fn();
     render(<LandingPage onStart={onStart} />, { wrapper: gdprWrapper });
 
-    await screen.findByRole('button', { name: 'Aloita' });
-    await user.click(screen.getByText('Aloita'));
+    await screen.findAllByRole('button', { name: 'Aloita' });
+    const buttons = screen.getAllByRole('button', { name: 'Aloita' });
+    await user.click(buttons[0]);
     expect(onStart).toHaveBeenCalledOnce();
   });
 });
