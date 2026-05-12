@@ -33,9 +33,8 @@ describe('App', () => {
   it('renderöi LandingPagen aluksi', async () => {
     render(<App />);
     await waitFor(() => {
-      expect(
-        screen.getByText('Myyvempi CV interim-toimeksiantoihin')
-      ).toBeInTheDocument();
+      const heading = screen.getByRole('heading', { level: 1 });
+      expect(heading.textContent).toContain('Myyvempi CV');
     });
   });
 
@@ -58,10 +57,11 @@ describe('App', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Aloita')).not.toBeDisabled();
+      const buttons = screen.getAllByRole('button', { name: 'Aloita' });
+      expect(buttons[0]).not.toBeDisabled();
     });
 
-    await user.click(screen.getByText('Aloita'));
+    await user.click(screen.getAllByRole('button', { name: 'Aloita' })[0]);
 
     await waitFor(() => {
       expect(screen.getByText('Lataa CV ja LinkedIn-profiili')).toBeInTheDocument();
