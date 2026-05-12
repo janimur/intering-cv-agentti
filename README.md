@@ -16,6 +16,32 @@ Kaksivaiheinen agentti:
 
 Kaikki strukturoitu output kulkee Anthropic `tool_use`-mekanismin läpi. Output validoidaan Pydanticilla.
 
+## Käynnistys Docker Composella
+
+Ensimmäinen käynnistys (rakentaa kontit):
+```bash
+docker compose up --build -d
+```
+
+Avaa selain osoitteeseen http://localhost.
+
+Logien seuranta:
+```bash
+docker compose logs -f backend
+```
+
+Pysäytys:
+```bash
+docker compose down
+```
+
+Frontend-koodin muutos vaatii konttien uudelleenrakentamisen:
+```bash
+docker compose up --build -d
+```
+
+Vaatii .env-tiedoston repon juuressa jossa on ANTHROPIC_API_KEY.
+
 ## Asennus
 
 Vaatii Python 3.11+ ja [uv](https://docs.astral.sh/uv/).
