@@ -10,7 +10,7 @@ interface OutputPageProps {
 function LinkedInSection({ output }: { output: LinkedInOutput }) {
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">LinkedIn</h2>
+      <h2 className="mb-4">LinkedIn</h2>
       <CopyField label="Otsikko (Headline)" text={output.headline} />
       <CopyField label="About" text={output.about} multiline />
       {output.experience.map((exp, i) => (
@@ -62,11 +62,8 @@ function CvSection({
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">CV</h2>
-        <button
-          onClick={handleDownload}
-          className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
-        >
+        <h2>CV</h2>
+        <button onClick={handleDownload} className="btn-primary">
           Lataa PDF
         </button>
       </div>
@@ -134,7 +131,7 @@ function CvSection({
 function InteringSection({ output }: { output: InteringOutput }) {
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">Intering</h2>
+      <h2 className="mb-4">Intering</h2>
       <CopyField label="Hook" text={output.hook} />
       {output.product_cards.map((card, i) => (
         <CopyField
@@ -164,24 +161,27 @@ export function OutputPage({ onRestart }: OutputPageProps) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold text-gray-900">Tulokset</h1>
-        <button
-          onClick={handleRestart}
-          className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm"
-        >
+      <div className="flex items-baseline justify-between mb-8">
+        <div>
+          <h1 className="mb-2">Tulokset</h1>
+          <p className="text-gray-600">
+            Kopioi tekstit suoraan LinkedIniin ja intering.fi-profiiliisi,
+            lataa CV PDF:nä.
+          </p>
+        </div>
+        <button onClick={handleRestart} className="btn-secondary">
           Aloita alusta
         </button>
       </div>
 
       {pdfError && (
-        <p className="text-sm text-red-600 mb-4 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="text-sm text-danger mb-4 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {pdfError}
         </p>
       )}
 
       {!linkedinOutput && !cvOutput && !interingOutput && (
-        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+        <div className="card text-center py-12">
           <p className="text-gray-500">Ei tuloksia. Palaa takaisin ja aja kirjoittajat.</p>
         </div>
       )}
@@ -200,11 +200,8 @@ export function OutputPage({ onRestart }: OutputPageProps) {
         {interingOutput && <InteringSection output={interingOutput} />}
       </div>
 
-      <div className="mt-8 pt-6 border-t border-gray-200">
-        <button
-          onClick={handleRestart}
-          className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
-        >
+      <div className="mt-12 pt-6 border-t border-gray-200">
+        <button onClick={handleRestart} className="btn-secondary">
           Aloita alusta
         </button>
       </div>

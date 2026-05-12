@@ -29,16 +29,16 @@ function StringListEditor({ label, items, onChange }: StringListEditorProps) {
         {label}
       </label>
       {items.map((item, i) => (
-        <div key={i} className="flex gap-2 mb-1">
+        <div key={i} className="flex gap-2 mb-1.5">
           <input
             type="text"
             value={item}
             onChange={(e) => updateItem(i, e.target.value)}
-            className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="input-field flex-1 px-3 py-1.5"
           />
           <button
             onClick={() => removeItem(i)}
-            className="text-xs px-2 py-1 rounded bg-gray-200 hover:bg-red-100 text-gray-600 hover:text-red-700"
+            className="text-xs px-3 py-1 rounded-lg text-gray-500 hover:text-danger hover:bg-red-50 transition-colors"
           >
             Poista
           </button>
@@ -46,7 +46,7 @@ function StringListEditor({ label, items, onChange }: StringListEditorProps) {
       ))}
       <button
         onClick={addItem}
-        className="text-xs px-3 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 mt-1"
+        className="text-xs px-3 py-1.5 rounded-lg text-intering-500 hover:bg-intering-50 mt-1 transition-colors font-medium"
       >
         + Lisää
       </button>
@@ -74,7 +74,7 @@ export function PositioningEditor({
   return (
     <div className="space-y-6">
       <section>
-        <h3 className="text-lg font-medium text-gray-900 mb-3">Positiointi</h3>
+        <h3 className="mb-4">Positiointi</h3>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Positiointikulma (primary angle)
@@ -83,7 +83,7 @@ export function PositioningEditor({
             value={pos.primary_angle}
             onChange={(e) => update("positioning.primary_angle", e.target.value)}
             rows={3}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="input-field"
           />
         </div>
         <StringListEditor
@@ -104,7 +104,7 @@ export function PositioningEditor({
       </section>
 
       <section>
-        <h3 className="text-lg font-medium text-gray-900 mb-3">
+        <h3 className="mb-4">
           Päätarina (flagship story)
         </h3>
         <div className="mb-4">
@@ -117,7 +117,7 @@ export function PositioningEditor({
               update("evidence.flagship_story.context", e.target.value)
             }
             rows={2}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="input-field"
           />
         </div>
         <div className="mb-4">
@@ -130,7 +130,7 @@ export function PositioningEditor({
               update("evidence.flagship_story.action", e.target.value)
             }
             rows={2}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="input-field"
           />
         </div>
         <div className="mb-4">
@@ -146,13 +146,13 @@ export function PositioningEditor({
               )
             }
             rows={2}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="input-field"
           />
         </div>
       </section>
 
       <section>
-        <h3 className="text-lg font-medium text-gray-900 mb-3">Avainviestit</h3>
+        <h3 className="mb-4">Avainviestit</h3>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             One-liner
@@ -161,7 +161,7 @@ export function PositioningEditor({
             value={key_messages.one_liner}
             onChange={(e) => update("key_messages.one_liner", e.target.value)}
             rows={2}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="input-field"
           />
         </div>
         <div className="mb-4">
@@ -174,7 +174,7 @@ export function PositioningEditor({
               update("key_messages.elevator_pitch", e.target.value)
             }
             rows={4}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="input-field"
           />
         </div>
         <StringListEditor
@@ -185,7 +185,7 @@ export function PositioningEditor({
       </section>
 
       <section>
-        <h3 className="text-lg font-medium text-gray-900 mb-3">
+        <h3 className="mb-4">
           Asetukset
         </h3>
         <div className="mb-4">
@@ -196,7 +196,7 @@ export function PositioningEditor({
             type="text"
             value={preferences.tone}
             onChange={(e) => update("preferences.tone", e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="input-field"
           />
         </div>
         <StringListEditor

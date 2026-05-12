@@ -33,7 +33,9 @@ describe('App', () => {
   it('renderöi LandingPagen aluksi', async () => {
     render(<App />);
     await waitFor(() => {
-      expect(screen.getByText('Intering CV-agentti')).toBeInTheDocument();
+      expect(
+        screen.getByText('Myyvempi CV interim-toimeksiantoihin')
+      ).toBeInTheDocument();
     });
   });
 

@@ -49,11 +49,13 @@ export function UploadPage({ onBack, onUploaded }: UploadPageProps) {
     <div>
       <SpinnerOverlay visible={isUploading} message="Luetaan tiedostoja..." />
 
-      <h1 className="text-3xl font-semibold text-gray-900 mb-6">
-        Lataa CV ja LinkedIn-profiili
-      </h1>
+      <h1 className="mb-2">Lataa CV ja LinkedIn-profiili</h1>
+      <p className="text-gray-600 mb-8">
+        CV on pakollinen. LinkedIn-profiili tuo kartoittajalle lisää kontekstia
+        ja oman äänensävysi.
+      </p>
 
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+      <div className="card mb-6">
         <FileUpload
           label="CV (pakollinen)"
           onFileSelect={setCvFile}
@@ -61,13 +63,10 @@ export function UploadPage({ onBack, onUploaded }: UploadPageProps) {
           required
         />
 
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-3">
-            LinkedIn-tiedot (valinnainen)
-          </h2>
-          <p className="text-sm text-gray-500 mb-3">
-            Voit ladata LinkedIn-profiilin PDF:nä tai liittää tekstin alla
-            olevaan kenttään.
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          <h3 className="mb-1">LinkedIn-tiedot</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Lataa LinkedIn-profiilin PDF tai liitä teksti suoraan.
           </p>
 
           <FileUpload
@@ -77,22 +76,22 @@ export function UploadPage({ onBack, onUploaded }: UploadPageProps) {
           />
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              TAI liitä LinkedIn-teksti tähän
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              tai liitä LinkedIn-teksti
             </label>
             <textarea
               value={linkedinText}
               onChange={(e) => setLinkedinText(e.target.value)}
               placeholder="Kopioi LinkedIn-profiilisi teksti tähän..."
               rows={8}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="input-field font-sans"
             />
           </div>
         </div>
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 mb-4 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="text-sm text-danger mb-4 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {error}
         </p>
       )}
@@ -101,14 +100,14 @@ export function UploadPage({ onBack, onUploaded }: UploadPageProps) {
         <button
           onClick={onBack}
           disabled={isUploading}
-          className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
+          className="btn-secondary"
         >
           Takaisin
         </button>
         <button
           onClick={handleUpload}
           disabled={!cvFile || isUploading}
-          className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+          className="btn-primary"
         >
           Lataa ja jatka
         </button>

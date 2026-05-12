@@ -74,37 +74,32 @@ export function PositioningPage({ onBack, onContinue }: PositioningPageProps) {
         message="Kartoittaja analysoi materiaalia, tämä kestää 30–60 sekuntia..."
       />
 
-      <h1 className="text-3xl font-semibold text-gray-900 mb-2">
-        Positiointikartoitus
-      </h1>
-      <p className="text-gray-500 text-sm mb-6">
-        Kartoittaja analysoi CV:si ja LinkedIn-profiilisi ja rakentaa
-        positiointidokumentin. Voit muokata tuloksia ennen kuin jatkat
-        kirjoittajiin.
+      <h1 className="mb-2">Positiointikartoitus</h1>
+      <p className="text-gray-600 mb-8">
+        Kartoittaja analysoi materiaalisi ja ehdottaa interim-positioinnin.
+        Voit muokata tuloksia ennen kuin jatkat kirjoittajiin.
       </p>
 
       {error && (
-        <p className="text-sm text-red-600 mb-4 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="text-sm text-danger mb-4 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {error}
         </p>
       )}
 
       {!localDoc && !isRunning && (
-        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center mb-6">
-          <p className="text-gray-600 mb-4">
-            Aja kartoittaja analysoidaksesi materiaaliasi
+        <div className="card text-center py-12 mb-6">
+          <p className="text-gray-600 mb-6">
+            Klikkaa alla aloittaaksesi kartoituksen.
+            Tämä kestää noin 30–60 sekuntia.
           </p>
-          <button
-            onClick={handleRun}
-            className="px-6 py-3 rounded bg-blue-600 hover:bg-blue-700 text-white font-medium"
-          >
+          <button onClick={handleRun} className="btn-primary text-base px-6 py-3">
             Aja kartoittaja
           </button>
         </div>
       )}
 
       {localDoc && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+        <div className="card mb-6">
           <PositioningEditor
             positioning={localDoc}
             onChange={setLocalDoc}
@@ -113,45 +108,29 @@ export function PositioningPage({ onBack, onContinue }: PositioningPageProps) {
       )}
 
       {saveSuccess && (
-        <p className="text-sm text-green-700 mb-4 bg-green-50 border border-green-200 rounded px-3 py-2">
+        <p className="text-sm text-green-700 mb-4 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
           Muutokset tallennettu
         </p>
       )}
 
       <div className="flex gap-3 flex-wrap">
-        <button
-          onClick={onBack}
-          disabled={isRunning}
-          className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
-        >
+        <button onClick={onBack} disabled={isRunning} className="btn-secondary">
           Takaisin
         </button>
 
         {localDoc && (
           <>
-            <button
-              onClick={handleSave}
-              disabled={isRunning}
-              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
-            >
+            <button onClick={handleSave} disabled={isRunning} className="btn-secondary">
               Tallenna muutokset
             </button>
-            <button
-              onClick={onContinue}
-              disabled={isRunning}
-              className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
-            >
+            <button onClick={onContinue} disabled={isRunning} className="btn-primary">
               Jatka kirjoittajiin
             </button>
           </>
         )}
 
         {!localDoc && (
-          <button
-            onClick={handleRun}
-            disabled={isRunning}
-            className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-          >
+          <button onClick={handleRun} disabled={isRunning} className="btn-primary">
             Aja kartoittaja
           </button>
         )}

@@ -30,7 +30,9 @@ function gdprWrapper({ children }: { children: ReactNode }) {
 describe('LandingPage', () => {
   it('renderöi otsikon', () => {
     render(<LandingPage onStart={vi.fn()} />, { wrapper: noGdprWrapper });
-    expect(screen.getByText('Intering CV-agentti')).toBeInTheDocument();
+    expect(
+      screen.getByText('Myyvempi CV interim-toimeksiantoihin')
+    ).toBeInTheDocument();
   });
 
   it('renderöi "Aloita"-painikkeen', () => {
