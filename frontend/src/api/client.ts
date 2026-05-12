@@ -6,6 +6,7 @@ import type {
   InteringOutput,
   WriterType,
   IteratePayload,
+  PromptItem,
 } from "../types/api";
 
 class ApiError extends Error {
@@ -19,6 +20,19 @@ class ApiError extends Error {
   }
 }
 
+// Tallenna admin-token sessionStorageen jotta se sailyy reload:n yli
+let _adminToken: string | null = sessionStorage.getItem("admin_token");
+
+export function setAdminToken(token: string | null) {
+  _adminToken = token;
+  if (token) sessionStorage.setItem("admin_token", token);
+  else sessionStorage.removeItem("admin_token");
+}
+
+export function getAdminToken(): string | null {
+  return _adminToken;
+}
+
 async function _request<T>(
   path: string,
   init: RequestInit & { sessionId?: string | null } = {}
@@ -27,6 +41,9 @@ async function _request<T>(
   const headers = new Headers(restInit.headers);
   if (sessionId) {
     headers.set("X-Session-ID", sessionId);
+  }
+  if (_adminToken && path.startsWith("/api/admin/")) {
+    headers.set("X-Admin-Token", _adminToken);
   }
   const response = await fetch(path, { ...restInit, headers });
   if (!response.ok) {
@@ -98,6 +115,20 @@ export const api = {
     _request<Blob>("/api/cv/pdf", { method: "GET", sessionId }),
 
   fetchGdpr: () => _request<{ content: string }>("/api/gdpr"),
+
+  admin: {
+    listPrompts: () => _request<PromptItem[]>("/api/admin/prompts"),
+    updatePrompt: (name: string, content: string) =>
+      _request<PromptItem>(`/api/admin/prompts/${name}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      }),
+    resetPrompt: (name: string) =>
+      _request<PromptItem>(`/api/admin/prompts/${name}`, {
+        method: "DELETE",
+      }),
+  },
 };
 
 export { ApiError };

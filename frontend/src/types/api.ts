@@ -103,3 +103,9 @@ export interface IteratePayload {
   note: string;
   target_field?: string;
 }
+
+export interface PromptItem {
+  name: string;
+  content: string;
+  is_overlay: boolean;
+}

@@ -13,6 +13,11 @@ vi.mock('../api/client', () => ({
     iterateWriter: vi.fn(),
     downloadCvPdf: vi.fn(),
     updatePositioning: vi.fn(),
+    admin: {
+      listPrompts: vi.fn(),
+      updatePrompt: vi.fn(),
+      resetPrompt: vi.fn(),
+    },
   },
   ApiError: class ApiError extends Error {
     status: number;
@@ -23,6 +28,8 @@ vi.mock('../api/client', () => ({
       this.detail = detail;
     }
   },
+  setAdminToken: vi.fn(),
+  getAdminToken: vi.fn().mockReturnValue(null),
 }));
 
 beforeEach(() => {

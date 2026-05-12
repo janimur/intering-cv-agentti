@@ -182,6 +182,18 @@ git config core.hooksPath .githooks
 
 Jos joudut ohittamaan hookin poikkeustilanteessa, käytä `git commit --no-verify`.
 
+## Admin-toiminnot
+
+Promptit ovat muokattavissa selaimessa ilman koodimuutoksia. Aseta `.env`-
+tiedostoon `ADMIN_TOKEN=<jokin-pitkä-satunnainen-merkkijono>` ja käynnistä
+palvelu uudelleen. Avaa sitten selaimessa:
+
+http://localhost/?admin=<jokin-pitkä-satunnainen-merkkijono>
+
+Muokatut promptit tallentuvat `data/prompts/`-volumeen ja tulevat voimaan
+välittömästi. "Palauta oletukseen" -painike poistaa overlay-tiedoston ja
+seuraava lataus käyttää `prompts/`-hakemiston (git-versioitua) sisältöä.
+
 ## Tunnetut rajoitukset
 
 - **About-pituus**: prompti ohjaa "alle 2000 merkkiä", mutta Opus 4.7 ylittää rajan ajoittain (ks. EVALUATION.md). Schema-tason `max_length` voisi pakottaa retryyn — ei toteutettu tässä vaiheessa.

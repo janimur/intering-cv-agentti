@@ -1,9 +1,9 @@
 import json
-from pathlib import Path
 from typing import Any, Literal
 from anthropic import Anthropic
 from pydantic import BaseModel
 
+from src.prompts import load_prompt
 from src.schemas import (
     PositioningDocument,
     LinkedInOutput,
@@ -12,27 +12,25 @@ from src.schemas import (
     to_tool_input_schema,
 )
 
-PROMPTS_DIR = Path(__file__).parent.parent / "prompts"
-
 WriterType = Literal["linkedin", "cv", "intering"]
 
 _WRITER_CONFIG = {
     "linkedin": {
-        "prompt_file": "kirjoittaja_linkedin_system.md",
+        "prompt_file": "kirjoittaja_linkedin_system",
         "model": "claude-opus-4-7",
         "tool_name": "save_linkedin_output",
         "tool_description": "Tallenna LinkedIn-profiilitekstit strukturoituna JSON:na",
         "schema": LinkedInOutput,
     },
     "cv": {
-        "prompt_file": "kirjoittaja_cv_system.md",
+        "prompt_file": "kirjoittaja_cv_system",
         "model": "claude-opus-4-7",
         "tool_name": "save_cv_document",
         "tool_description": "Tallenna CV strukturoituna JSON:na",
         "schema": CVDocument,
     },
     "intering": {
-        "prompt_file": "kirjoittaja_intering_system.md",
+        "prompt_file": "kirjoittaja_intering_system",
         "model": "claude-opus-4-7",
         "tool_name": "save_intering_output",
         "tool_description": "Tallenna intering.fi-profiilitekstit strukturoituna JSON:na",
@@ -50,7 +48,7 @@ def _run_writer(
     """Yhteinen ajologiikka kaikille kolmelle kirjoittajalle."""
     config = _WRITER_CONFIG[writer_type]
     client = Anthropic()
-    system_prompt = (PROMPTS_DIR / config["prompt_file"]).read_text(encoding="utf-8")
+    system_prompt = load_prompt(config["prompt_file"])
     schema_cls: type[BaseModel] = config["schema"]
 
     sections = [
@@ -116,7 +114,7 @@ def _run_writer_with_history(
     """
     config = _WRITER_CONFIG[writer_type]
     client = Anthropic()
-    system_prompt = (PROMPTS_DIR / config["prompt_file"]).read_text(encoding="utf-8")
+    system_prompt = load_prompt(config["prompt_file"])
     schema_cls: type[BaseModel] = config["schema"]
 
     # Alkuperäinen user-viesti — sama kuin _run_writer käyttää

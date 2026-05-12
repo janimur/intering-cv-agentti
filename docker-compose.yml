@@ -5,6 +5,7 @@ services:
       dockerfile: backend/Dockerfile
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
       - DATA_DIR=/data
     volumes:
       - metrics_data:/data
