@@ -146,6 +146,16 @@ uv run python tests/test_kirjoittajat.py
 uv run python evaluate.py
 ```
 
+### Pre-commit hook
+
+Repossa on git-hook (`.githooks/pre-commit`) joka ajaa kaikki yksikkö- ja API-testit automaattisesti ennen jokaista committia. Kytke se päälle kerran kloonauksen jälkeen:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Jos joudut ohittamaan hookin poikkeustilanteessa, käytä `git commit --no-verify`.
+
 ## Tunnetut rajoitukset
 
 - **About-pituus**: prompti ohjaa "alle 2000 merkkiä", mutta Opus 4.7 ylittää rajan ajoittain (ks. EVALUATION.md). Schema-tason `max_length` voisi pakottaa retryyn — ei toteutettu tässä vaiheessa.

@@ -3,6 +3,9 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
+  useMemo,
+  useRef,
   type ReactNode,
 } from "react";
 import type {
@@ -83,32 +86,97 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [state.gdprAccepted]);
 
-  const value: SessionContextValue = {
-    ...state,
-    setSessionId: (id) => setState((s) => ({ ...s, sessionId: id })),
-    setPositioning: (doc) => setState((s) => ({ ...s, positioning: doc })),
-    setLinkedinOutput: (out) =>
+  // Pidetään tuoreimman state:n referenssi ref:issä jotta resetSession voi
+  // lukea gdprAccepted:n ilman että callback on luotava uudelleen joka
+  // state-muutoksella. Tämä on tärkeä — ilman tätä setter-funktiot
+  // luotaisiin uudelleen joka renderillä, mikä rikkoisi useEffect-hookit
+  // joissa setter on dependency-listassa (ääretön re-render).
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  const setSessionId = useCallback(
+    (id: string | null) => setState((s) => ({ ...s, sessionId: id })),
+    []
+  );
+  const setPositioning = useCallback(
+    (doc: PositioningDocument | null) =>
+      setState((s) => ({ ...s, positioning: doc })),
+    []
+  );
+  const setLinkedinOutput = useCallback(
+    (out: LinkedInOutput | null) =>
       setState((s) => ({ ...s, linkedinOutput: out })),
-    setCvOutput: (out) => setState((s) => ({ ...s, cvOutput: out })),
-    setInteringOutput: (out) =>
+    []
+  );
+  const setCvOutput = useCallback(
+    (out: CVDocument | null) => setState((s) => ({ ...s, cvOutput: out })),
+    []
+  );
+  const setInteringOutput = useCallback(
+    (out: InteringOutput | null) =>
       setState((s) => ({ ...s, interingOutput: out })),
-    setCvTextPreview: (text) =>
-      setState((s) => ({ ...s, cvTextPreview: text })),
-    setLinkedinAvailable: (available) =>
+    []
+  );
+  const setCvTextPreview = useCallback(
+    (text: string) => setState((s) => ({ ...s, cvTextPreview: text })),
+    []
+  );
+  const setLinkedinAvailable = useCallback(
+    (available: boolean) =>
       setState((s) => ({ ...s, linkedinAvailable: available })),
-    setLoading: (key, value) =>
+    []
+  );
+  const setLoading = useCallback(
+    (key: LoadingKey, value: boolean) =>
       setState((s) => ({
         ...s,
         isLoading: { ...s.isLoading, [key]: value },
       })),
-    setError: (key, value) =>
+    []
+  );
+  const setError = useCallback(
+    (key: string, value: string | null) =>
       setState((s) => ({ ...s, errors: { ...s.errors, [key]: value } })),
-    acceptGdpr: () => setState((s) => ({ ...s, gdprAccepted: true })),
-    resetSession: () => {
-      // Säilytä gdpr-hyväksyntä, nollaa kaikki muu
-      setState({ ...initialState, gdprAccepted: state.gdprAccepted });
-    },
-  };
+    []
+  );
+  const acceptGdpr = useCallback(
+    () => setState((s) => ({ ...s, gdprAccepted: true })),
+    []
+  );
+  const resetSession = useCallback(() => {
+    setState({ ...initialState, gdprAccepted: stateRef.current.gdprAccepted });
+  }, []);
+
+  const value = useMemo<SessionContextValue>(
+    () => ({
+      ...state,
+      setSessionId,
+      setPositioning,
+      setLinkedinOutput,
+      setCvOutput,
+      setInteringOutput,
+      setCvTextPreview,
+      setLinkedinAvailable,
+      setLoading,
+      setError,
+      acceptGdpr,
+      resetSession,
+    }),
+    [
+      state,
+      setSessionId,
+      setPositioning,
+      setLinkedinOutput,
+      setCvOutput,
+      setInteringOutput,
+      setCvTextPreview,
+      setLinkedinAvailable,
+      setLoading,
+      setError,
+      acceptGdpr,
+      resetSession,
+    ]
+  );
 
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>

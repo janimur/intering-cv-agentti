@@ -19,11 +19,18 @@ router = APIRouter()
 # Sliding window: maksimi iteraatioita per writer
 MAX_ITERATIONS = 3
 
-_RUNNERS = {
-    "linkedin": run_linkedin_writer,
-    "cv": run_cv_writer,
-    "intering": run_intering_writer,
-}
+
+def _get_runner(writer_type: WriterType):
+    """Palauttaa kirjoittaja-funktion runtime-aikana. Tämä mahdollistaa
+    patchayksen testeissä — modulen lataushetkellä tallennettu dict-viittaus
+    estäisi patchin näkymisen."""
+    if writer_type == "linkedin":
+        return run_linkedin_writer
+    if writer_type == "cv":
+        return run_cv_writer
+    if writer_type == "intering":
+        return run_intering_writer
+    raise ValueError(f"Tuntematon writer_type: {writer_type}")
 
 
 class IterateRequest(BaseModel):
@@ -42,7 +49,7 @@ async def run_writer(
     if session.positioning is None:
         raise HTTPException(409, "Run /api/positioning first")
 
-    runner = _RUNNERS[writer_type]
+    runner = _get_runner(writer_type)
     with measure(writer_type):
         output = await asyncio.to_thread(
             runner,
