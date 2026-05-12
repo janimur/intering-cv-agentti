@@ -1,6 +1,7 @@
 """
 Jaetut fixturet FastAPI TestClient -testeille.
 """
+import asyncio
 import importlib
 import pytest
 from unittest.mock import patch, MagicMock, AsyncMock
@@ -8,6 +9,18 @@ from fastapi.testclient import TestClient
 
 from backend.app.main import app
 from tests._fixtures import sample_positioning, sample_cv, sample_linkedin, sample_intering
+
+
+@pytest.fixture(autouse=True)
+def _patch_to_thread(monkeypatch):
+    """Korvaa asyncio.to_thread no-op-async-funktiolla. Mockattujen
+    kirjoittaja-funktioiden ajoaika on mikrosekunteja, joten threadpoolin
+    käyttö on tarpeetonta yleiskuormaa (kymmeniä sekunteja per testi muuten).
+    Pidetään patchaus monkeypatchillä jotta se säilyy koko testifunktion ajan
+    asynkronisen FastAPI-pyynnönkäsittelyn yli."""
+    async def no_thread(func, /, *args, **kwargs):
+        return func(*args, **kwargs)
+    monkeypatch.setattr(asyncio, "to_thread", no_thread)
 
 
 @pytest.fixture
