@@ -226,45 +226,34 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6">
+    <div className="card">
       <div className="flex items-baseline justify-between gap-4">
         <div>
-          <h3 className="text-lg font-medium text-gray-900">
-            {WRITER_LABELS[type]}
-          </h3>
+          <h3>{WRITER_LABELS[type]}</h3>
           <p className="text-sm text-gray-500 mt-1">{WRITER_DESCRIPTIONS[type]}</p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           {!isRunning && (
-            <button
-              onClick={handleRun}
-              className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
-            >
+            <button onClick={handleRun} className="btn-primary">
               {output ? "Aja uudelleen" : "Aja"}
             </button>
           )}
 
           {isRunning && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <div className="w-4 h-4 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+            <div className="flex items-center gap-2 text-sm text-gray-500 px-3">
+              <div className="w-4 h-4 border-2 border-intering-100 border-t-intering-500 rounded-full animate-spin" />
               Ajetaan...
             </div>
           )}
 
           {output && !isRunning && (
-            <button
-              onClick={() => setIterateOpen(true)}
-              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm"
-            >
+            <button onClick={() => setIterateOpen(true)} className="btn-secondary">
               Iteroi
             </button>
           )}
 
           {type === "cv" && output && !isRunning && (
-            <button
-              onClick={handleDownloadPdf}
-              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm"
-            >
+            <button onClick={handleDownloadPdf} className="btn-secondary">
               Lataa PDF
             </button>
           )}
@@ -272,7 +261,7 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 mt-3 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="text-sm text-danger mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {error}
         </p>
       )}

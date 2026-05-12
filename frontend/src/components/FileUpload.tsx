@@ -37,10 +37,10 @@ export function FileUpload({
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
           dragging
-            ? "border-blue-400 bg-blue-50"
-            : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
+            ? "border-intering-500 bg-intering-50"
+            : "border-gray-300 hover:border-intering-500 hover:bg-intering-50/30"
         }`}
         onDragOver={(e) => {
           e.preventDefault();
@@ -58,10 +58,15 @@ export function FileUpload({
           onChange={handleChange}
         />
         {selectedFile ? (
-          <p className="text-sm text-gray-800 font-medium">{selectedFile.name}</p>
+          <div>
+            <p className="text-sm font-medium text-intering-500">
+              {selectedFile.name}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">Klikkaa vaihtaaksesi</p>
+          </div>
         ) : (
           <>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-700">
               Vedä tiedosto tähän tai klikkaa valitaksesi
             </p>
             <p className="text-xs text-gray-400 mt-1">PDF</p>

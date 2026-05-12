@@ -16,14 +16,12 @@ export function GdprBanner() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-      <div className="bg-white rounded-lg shadow-xl max-w-xl w-full mx-4 flex flex-col max-h-[80vh]">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Tietosuoja ja tietojen käsittely
-          </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-2xl max-w-xl w-full mx-4 flex flex-col max-h-[80vh]">
+        <div className="px-6 py-5 border-b border-gray-100">
+          <h2>Tietosuoja ja tietojen käsittely</h2>
         </div>
-        <div className="px-6 py-4 overflow-y-auto flex-1">
+        <div className="px-6 py-5 overflow-y-auto flex-1">
           {loading ? (
             <p className="text-gray-600">Ladataan...</p>
           ) : (
@@ -32,11 +30,8 @@ export function GdprBanner() {
             </pre>
           )}
         </div>
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-          <button
-            onClick={acceptGdpr}
-            className="px-4 py-2 rounded bg-blue-600 text-white font-medium hover:bg-blue-700"
-          >
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end">
+          <button onClick={acceptGdpr} className="btn-primary">
             Hyväksyn
           </button>
         </div>

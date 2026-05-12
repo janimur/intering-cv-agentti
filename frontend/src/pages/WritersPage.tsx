@@ -39,14 +39,14 @@ export function WritersPage({ onBack, onContinue }: WritersPageProps) {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold text-gray-900 mb-2">Kirjoittajat</h1>
-      <p className="text-gray-500 text-sm mb-6">
-        Aja kirjoittajat haluamassasi järjestyksessä. Voit iteroida tuloksia
+      <h1 className="mb-2">Kirjoittajat</h1>
+      <p className="text-gray-600 mb-8">
+        Aja kukin kirjoittaja erikseen. Voit iteroida tuloksia ja antaa lisäohjeita
         ennen jatkamista.
       </p>
 
       {pdfError && (
-        <p className="text-sm text-red-600 mb-4 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="text-sm text-danger mb-4 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           PDF-virhe: {pdfError}
         </p>
       )}
@@ -70,17 +70,11 @@ export function WritersPage({ onBack, onContinue }: WritersPageProps) {
       </div>
 
       <div className="flex gap-3 flex-wrap">
-        <button
-          onClick={onBack}
-          className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700"
-        >
+        <button onClick={onBack} className="btn-secondary">
           Takaisin
         </button>
         {hasAnyOutput && (
-          <button
-            onClick={onContinue}
-            className="px-4 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
-          >
+          <button onClick={onContinue} className="btn-primary">
             Jatka katselmaan tulokset
           </button>
         )}
