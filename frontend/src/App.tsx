@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SessionProvider, useSession } from "./store/SessionContext";
 import { GdprBanner } from "./components/GdprBanner";
 import { LandingPage } from "./pages/LandingPage";
@@ -6,6 +6,8 @@ import { UploadPage } from "./pages/UploadPage";
 import { PositioningPage } from "./pages/PositioningPage";
 import { WritersPage } from "./pages/WritersPage";
 import { OutputPage } from "./pages/OutputPage";
+import { AdminPage } from "./pages/AdminPage";
+import { setAdminToken, getAdminToken } from "./api/client";
 
 type Step = "landing" | "upload" | "positioning" | "writers" | "output";
 
@@ -21,7 +23,7 @@ function Logo() {
     <div className="flex items-center gap-2">
       <div className="relative">
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          {/* Sateenkaarikäyrä intering.fi-tyyliin */}
+          {/* Sateenkaarikayra intering.fi-tyyliin */}
           <path d="M4 20 Q 16 4 28 20" stroke="url(#g1)" strokeWidth="2.5" fill="none" strokeLinecap="round" />
           <defs>
             <linearGradient id="g1" x1="0" y1="0" x2="32" y2="0">
@@ -39,9 +41,19 @@ function Logo() {
   );
 }
 
-function Header({ currentStep, onLogoClick }: { currentStep: Step; onLogoClick: () => void }) {
+function Header({
+  currentStep,
+  onLogoClick,
+  adminMode,
+  onExitAdmin,
+}: {
+  currentStep: Step;
+  onLogoClick: () => void;
+  adminMode: boolean;
+  onExitAdmin: () => void;
+}) {
   const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
-  const showStepper = currentStep !== "landing";
+  const showStepper = currentStep !== "landing" && !adminMode;
 
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
@@ -49,6 +61,20 @@ function Header({ currentStep, onLogoClick }: { currentStep: Step; onLogoClick: 
         <button onClick={onLogoClick} className="hover:opacity-80 transition-opacity">
           <Logo />
         </button>
+
+        {adminMode && (
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-medium text-teal-600 bg-teal-50 border border-teal-200 rounded px-2 py-1">
+              Admin-tila
+            </span>
+            <button
+              onClick={onExitAdmin}
+              className="text-xs text-gray-500 hover:text-gray-700 underline"
+            >
+              Poistu admin-tilasta
+            </button>
+          </div>
+        )}
 
         {showStepper && (
           <ol className="hidden md:flex items-center gap-1 text-sm">
@@ -77,7 +103,7 @@ function Header({ currentStep, onLogoClick }: { currentStep: Step; onLogoClick: 
                   {s.label}
                 </span>
                 {i < STEPS.length - 1 && (
-                  <span className="text-gray-200 mx-2">―</span>
+                  <span className="text-gray-200 mx-2">&#8213;</span>
                 )}
               </li>
             ))}
@@ -105,18 +131,45 @@ function Footer() {
 
 function AppContent() {
   const [step, setStep] = useState<Step>("landing");
+  const [adminMode, setAdminMode] = useState(false);
   const { gdprAccepted } = useSession();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("admin");
+    if (token) {
+      setAdminToken(token);
+      setAdminMode(true);
+      // Siisti URL — poista admin-parametri jotta token ei nay reloadiin
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (getAdminToken()) {
+      setAdminMode(true);
+    }
+  }, []);
+
+  const handleExitAdmin = () => {
+    setAdminToken(null);
+    setAdminMode(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
       {!gdprAccepted && <GdprBanner />}
-      <Header currentStep={step} onLogoClick={() => setStep("landing")} />
+      <Header
+        currentStep={step}
+        onLogoClick={() => setStep("landing")}
+        adminMode={adminMode}
+        onExitAdmin={handleExitAdmin}
+      />
 
       <div className="flex-1 flex flex-col">
-        {step === "landing" && (
+        {adminMode ? (
+          <main className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-8 py-10 md:py-14">
+            <AdminPage />
+          </main>
+        ) : step === "landing" ? (
           <LandingPage onStart={() => setStep("upload")} />
-        )}
-        {step !== "landing" && (
+        ) : (
           <main className="flex-1 max-w-5xl w-full mx-auto px-4 md:px-8 py-10 md:py-14">
             {step === "upload" && (
               <UploadPage

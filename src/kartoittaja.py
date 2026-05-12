@@ -1,9 +1,7 @@
 import os
-from pathlib import Path
 from anthropic import Anthropic
+from src.prompts import load_prompt
 from src.schemas import PositioningDocument, to_tool_input_schema
-
-PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "kartoittaja_system.md"
 
 
 def run_kartoittaja(
@@ -23,7 +21,7 @@ def run_kartoittaja(
     Temperature=1 koska thinking vaatii sen.
     """
     client = Anthropic()
-    system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
+    system_prompt = load_prompt("kartoittaja_system")
 
     sections = [f"## CV-teksti\n\n{cv_text}"]
     if linkedin_text:
