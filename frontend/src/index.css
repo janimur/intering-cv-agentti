@@ -31,21 +31,33 @@
   /* Pääpainike — tumma sininen kuten intering.fi "Kirjaudu sisään" / "Etsi interim-johtaja" */
   .btn-primary {
     @apply inline-flex items-center justify-center px-5 py-3
-           bg-intering-500 hover:bg-intering-600 active:bg-intering-700
            text-white font-semibold text-sm
            rounded-lg shadow-sm
            transition-all duration-150
-           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-intering-500;
+           disabled:opacity-40 disabled:cursor-not-allowed;
+    background-color: theme('colors.intering.500');
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: theme('colors.intering.600');
+  }
+  .btn-primary:active:not(:disabled) {
+    background-color: theme('colors.intering.700');
   }
 
   /* Turkoosi painike — kuten intering.fi "Varaa tapaaminen" / "Liity mukaan" */
   .btn-teal {
     @apply inline-flex items-center justify-center px-5 py-3
-           bg-teal-500 hover:bg-teal-600 active:bg-teal-700
            text-white font-semibold text-sm
            rounded-lg shadow-sm
            transition-all duration-150
            disabled:opacity-40 disabled:cursor-not-allowed;
+    background-color: theme('colors.teal.500');
+  }
+  .btn-teal:hover:not(:disabled) {
+    background-color: theme('colors.teal.600');
+  }
+  .btn-teal:active:not(:disabled) {
+    background-color: theme('colors.teal.700');
   }
 
   /* Sekundääri — neutraali outline */
@@ -61,12 +73,18 @@
   .input-field {
     @apply w-full px-3 py-2.5 text-sm
            bg-white border border-gray-300 rounded-lg
-           focus:outline-none focus:ring-2 focus:ring-intering-500/20 focus:border-intering-500
+           focus:outline-none
            transition-colors duration-150;
+  }
+  .input-field:focus {
+    ring-width: 2px;
+    border-color: theme('colors.intering.500');
+    box-shadow: 0 0 0 2px theme('colors.intering.500' / 20%);
   }
 
   .card {
-    @apply bg-white border border-gray-200 rounded-2xl shadow-card p-6 md:p-8;
+    @apply bg-white border border-gray-200 rounded-2xl p-6 md:p-8;
+    box-shadow: theme('boxShadow.card');
   }
 
   /* Hero-section — taustaväri intering.fi-tyyliin (gradientti, lämmin) */
