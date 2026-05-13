@@ -49,5 +49,9 @@ Kaksi havaintoa, kumpikaan ei kriittinen:
 - **LinkedInOutput.about**: schema ei aseta ylärajaa. Promptin "lyhennä alle 2000" -ohje pitää ~50–60 % ajoista. v3-iteraatiossa LinkedIn-input rikastutti syötteen niin että lopputuotos on 2127 merkkiä — yli rajan, mutta sisältö tiukka.
 - **CVDocument.experience.results**: schema-tason `min_length=2` toimii pakottavasti yhdessä prompti-ohjeen kanssa. Vanhat roolit tiivistetään `certifications`-osion yhdistelmälauseeksi, ei jätetä experienceen täytettävinä riveinä.
 - **evaluate.py**: 12 kriteeriä, exit-koodi 0 kun vain VAROITUS:ia. v3-iteraatio: 0 epäonnistunutta, 1 varoitus (About-pituus).
-- **Kustannus**: kaikki kolme kirjoittajaa + kartoittaja Opus 4.7:llä, ja LinkedIn-input pidentää syötettä. Yksi täysi ajo Janin profiilille on edelleen alle €0.50 — toimitusprojektissa hyväksyttävä.
+- **Kustannus**: kaikki kolme kirjoittajaa + kartoittaja Opus 4.7:llä, LinkedIn-input pidentää syötettä. Per-ajo-kustannus (Janin profiili, ~30k merkkiä input):
+  - Kartoittaja (Opus 4.7 + adaptive thinking, effort=high): ~$0.50
+  - LinkedIn / CV / Intering -kirjoittaja: ~$0.20 kukin → ~$0.60 yhteensä
+  - **Per täysi ajo: ~$1.10 ≈ €1.00**
+  - Iteraatioilla (max 3 per kirjoittaja, sliding window) +$0.20–0.30 per iteraatio. Realistinen worst case 1–2 iterointia per kirjoittaja: **€2.00–€3.00 per istunto**. Toimitusprojektissa hyväksyttävä.
 - **Iteraatiohistoria**: v1 (Sonnet-CV, ei LinkedIn): 1 VAROITUS About 2024. v2 (Opus-CV, ei LinkedIn): 0 VAROITUS, About 2000 tasan. v3 (Opus-CV + LinkedIn-input): 1 VAROITUS About 2127, mutta sisältö olennaisesti parempi (Janin oma ääni säilyy, tilannetyypit konkretisoituvat).
