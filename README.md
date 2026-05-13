@@ -30,6 +30,11 @@ Logien seuranta:
 docker compose logs -f backend
 ```
 
+Smoke test (palvelut oltava käynnissä):
+```bash
+bash scripts/smoke_test.sh
+```
+
 Pysäytys:
 ```bash
 docker compose down
