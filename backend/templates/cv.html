@@ -61,6 +61,7 @@
     </header>
 
     {# KEY RESULTS #}
+    {% if doc.key_results %}
     <section>
         <h2>Keskeiset tulokset</h2>
         <ul>
@@ -70,7 +71,10 @@
         </ul>
     </section>
 
+    {% endif %}
+
     {# EXPERTISE #}
+    {% if doc.expertise %}
     <section>
         <h2>Osaamisalueet</h2>
         <div class="expertise-grid">
@@ -79,6 +83,8 @@
         {% endfor %}
         </div>
     </section>
+
+    {% endif %}
 
     {# EXPERIENCE #}
     <section>
@@ -90,11 +96,13 @@
             </div>
             <div class="company">{{ entry.company }}</div>
             <div class="role-context">{{ entry.context }}</div>
+            {% if entry.results %}
             <ul>
             {% for r in entry.results %}
                 <li>{{ r }}</li>
             {% endfor %}
             </ul>
+            {% endif %}
         {% endfor %}
     </section>
 

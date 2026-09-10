@@ -44,18 +44,20 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
-  const { sessionId, isLoading, errors, setLoading, setError } = useSession();
+  const { sessionId, workflow, isLoading, errors, setLoading, setError } = useSession();
   const [iterateOpen, setIterateOpen] = useState(false);
 
   const isRunning = isLoading[type];
   const error = errors[type];
+  const approved = workflow?.status === "approved" && workflow.approved_revision === workflow.revision;
+  const stale = !!output && (!approved || output.source_revision !== workflow?.revision);
 
   const handleRun = async () => {
-    if (!sessionId) return;
+    if (!sessionId || !workflow || !approved) return;
     setLoading(type, true);
     setError(type, null);
     try {
-      const result = await api.runWriter(sessionId, type);
+      const result = await api.runWriter(sessionId, type, workflow.revision);
       onOutputChange(type, result as LinkedInOutput | CVDocument | InteringOutput);
     } catch (err) {
       const msg = err instanceof ApiError ? err.detail : "Kirjoittajan ajo epäonnistui";
@@ -66,7 +68,7 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
   };
 
   const handleDownloadPdf = async () => {
-    if (!sessionId) return;
+    if (!sessionId || stale || !approved) return;
     setLoading("pdf", true);
     setError("pdf", null);
     try {
@@ -234,7 +236,7 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           {!isRunning && (
-            <button onClick={handleRun} className="btn-primary">
+            <button onClick={handleRun} disabled={!approved} className="btn-primary">
               {output ? "Aja uudelleen" : "Aja"}
             </button>
           )}
@@ -246,19 +248,22 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
             </div>
           )}
 
-          {output && !isRunning && (
+          {output && !isRunning && !stale && (
             <button onClick={() => setIterateOpen(true)} className="btn-secondary">
               Iteroi
             </button>
           )}
 
-          {type === "cv" && output && !isRunning && (
+          {type === "cv" && output && !isRunning && !stale && (
             <button onClick={handleDownloadPdf} className="btn-secondary">
               Lataa PDF
             </button>
           )}
         </div>
       </div>
+
+      {!approved && <p className="text-sm text-amber-700 mt-3">Hyväksy positiointi ennen kirjoittamista.</p>}
+      {stale && <p role="status" className="text-sm text-amber-700 mt-3">Tämä teksti perustuu aiempiin tietoihin. Aja kirjoittaja uudelleen hyväksytyillä tiedoilla.</p>}
 
       {error && (
         <p className="text-sm text-danger mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">

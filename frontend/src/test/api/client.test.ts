@@ -56,13 +56,14 @@ describe('api.runPositioning', () => {
     const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse(payload));
     vi.stubGlobal('fetch', fetchMock);
 
-    await api.runPositioning('session-abc');
+    await api.runPositioning('session-abc', 0);
 
     expect(fetchMock).toHaveBeenCalledOnce();
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Headers }];
     expect(url).toBe('/api/positioning');
     expect(init.headers.get('X-Session-ID')).toBe('session-abc');
     expect(init.method).toBe('POST');
+    expect(JSON.parse(init.body as string)).toEqual({ revision: 0 });
   });
 });
 
@@ -169,13 +170,13 @@ describe('api.iterateWriter', () => {
     const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse(payload));
     vi.stubGlobal('fetch', fetchMock);
 
-    await api.iterateWriter('sid123', 'linkedin', { note: 'X' });
+    await api.iterateWriter('sid123', 'linkedin', { revision: 3, note: 'X' });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Headers }];
     expect(url).toBe('/api/writers/linkedin/iterate');
     expect(init.method).toBe('POST');
     expect(init.headers.get('Content-Type')).toBe('application/json');
-    expect(JSON.parse(init.body as string)).toEqual({ note: 'X' });
+    expect(JSON.parse(init.body as string)).toEqual({ revision: 3, note: 'X' });
     expect(init.headers.get('X-Session-ID')).toBe('sid123');
   });
 });

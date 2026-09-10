@@ -3,6 +3,7 @@ import type {
   CVDocument,
   LinkedInOutput,
   InteringOutput,
+  WorkflowState,
 } from "../types/api";
 
 export const samplePositioning: PositioningDocument = {
@@ -33,6 +34,7 @@ export const samplePositioning: PositioningDocument = {
 };
 
 export const sampleLinkedIn: LinkedInOutput = {
+  source_revision: 3,
   headline: "Interim CEO | Skaalaaja",
   about: "Skaalasin €2M → €20M.",
   experience: [
@@ -46,6 +48,7 @@ export const sampleLinkedIn: LinkedInOutput = {
 };
 
 export const sampleCv: CVDocument = {
+  source_revision: 3,
   header: {
     name: "Testi Henkilö",
     title: "Interim CEO",
@@ -73,6 +76,7 @@ export const sampleCv: CVDocument = {
 };
 
 export const sampleIntering: InteringOutput = {
+  source_revision: 3,
   hook: "Skaalaaja | IT | €5–€30M | Operaattori",
   product_cards: ["Kortti 1.", "Kortti 2."],
   profile_sections: {
@@ -82,4 +86,11 @@ export const sampleIntering: InteringOutput = {
     "Aikaisempi kokemus": "B2B-palveluyritykset.",
     "Aikaisempi Interim-kokemus": "10 vuotta.",
   },
+};
+
+export const sampleWorkflow: WorkflowState = {
+  status: "approved", revision: 3, approved_revision: 3,
+  positioning: samplePositioning,
+  profile: { additional_facts: [], corrections: [], goals: [], working_style: [], voice_examples: [], exclusions: [] },
+  current_question: null, answers: [], output_revisions: {}, prompt_checksums: {},
 };

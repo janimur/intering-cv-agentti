@@ -1,4 +1,6 @@
 import uuid
+from copy import deepcopy
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from threading import Lock
@@ -6,6 +8,7 @@ from typing import Literal
 
 from src.schemas import (
     PositioningDocument,
+    WorkflowState,
     LinkedInOutput,
     CVDocument,
     InteringOutput,
@@ -28,6 +31,8 @@ class Session:
     cv_text: str
     linkedin_text: str | None = None
     positioning: PositioningDocument | None = None
+    workflow: WorkflowState = field(default_factory=WorkflowState)
+    writer_generations: dict[str, int] = field(default_factory=dict)
     linkedin_output: LinkedInOutput | None = None
     cv_output: CVDocument | None = None
     intering_output: InteringOutput | None = None
@@ -53,7 +58,7 @@ class SessionStore:
         )
         with self._lock:
             self._sessions[sid] = session
-        return session
+        return deepcopy(session)
 
     def get(self, session_id: str) -> Session:
         with self._lock:
@@ -61,7 +66,21 @@ class SessionStore:
         if session is None:
             from fastapi import HTTPException
             raise HTTPException(status_code=404, detail="Session not found")
-        return session
+        return deepcopy(session)
+
+    def update(self, session_id: str, revision: int, change: Callable[[Session], None]) -> Session:
+        """Apply one mutation atomically; failed callbacks cannot partially update state."""
+        from fastapi import HTTPException
+        with self._lock:
+            current = self._sessions.get(session_id)
+            if current is None:
+                raise HTTPException(404, "Session not found")
+            if current.workflow.revision != revision:
+                raise HTTPException(409, "Tiedot ovat muuttuneet. Päivitä kartoitus ja yritä uudelleen.")
+            updated = deepcopy(current)
+            change(updated)
+            self._sessions[session_id] = updated
+            return deepcopy(updated)
 
     def all_ids(self) -> list[str]:
         with self._lock:

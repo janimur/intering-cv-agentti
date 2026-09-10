@@ -1,111 +1,33 @@
-# Manuaalitestaus — intering CV-agentti
+# Intering-sovelluksen testaus
 
-Tämän testin ajaa Jani (tai vastaava tarkastaja) ennen luovutusta interingille
-tai uuden iteraation jälkeen. Käy läpi koko putki omilla materiaaleilla.
+## Automaattiset tarkistukset
 
-## Esivalmistelut
+- `uv run pytest tests/unit tests/api`: skeemat, snapshotit, revision-kilpailut, hyväksyntä, promptien päivitys ja mockatut API-kutsut. Ei maksullisia mallikutsuja.
+- Frontend: `npm test` ja `npm run build` hakemistossa `frontend/`.
+- Selainpolku: frontendin Playwright-testit, API vastaukset mockattuina.
 
-1. `.env`-tiedosto repon juuressa, jossa:
-   ```
-   ANTHROPIC_API_KEY=sk-ant-...
-   ADMIN_TOKEN=<satunnainen-merkkijono>
-   ```
+## Manuaalinen koko polku
 
-2. CV-PDF saatavilla (esim. `tmp/Interim Manager CV - Jani Muuronen 1_2026.pdf`)
+Käynnistä sovellus README:n mukaan ja käytä julkaisukelpoista testimateriaalia. Malliajot vaativat API-avaimen ja maksavat.
 
-3. LinkedIn-profiili saatavilla joko tekstinä tai PDF:nä
+1. Hyväksy tietosuojailmoitus, lataa CV PDF:nä. Kokeile sekä ilman LinkedIniä että sen kanssa.
+2. Aja kartoitus. Tarkista että analyysi perustuu materiaaliin, eikä puuttuvaa lippulaivaa tai numeroita keksitä.
+3. Vastaa omin sanoin kysymykseen. Tarkista että seuraava kysymys hyödyntää aiempia tietoja ja kysyy vain yhtä aihetta kerrallaan. Tarkista myös interim-työtapa, tavoitteet ja ääni, jos CV ei kerro niistä.
+4. Ohita aihe ja merkitse toinen luottamukselliseksi. Vastaustekstiä ei kirjata kummassakaan; aiheeseen ei palata. Älä syötä oikeita salaisuuksia.
+5. Lopeta nykyisillä tiedoilla. Tarkista kaikki profiilin kentät ja positiointi. Korjaa vuosiluku, lisää tavoite ja rajaus, muokkaa sävyä. Hyväksy tiedot.
+6. Valitse ensin pelkkä CV. Tarkista minä-muoto ja olennaisten roolien säilyminen, vaikka roolilla ei olisi numerotuloksia. PDF ei saa näyttää tyhjää tulososiota.
+7. Iteroi ensimmäistä CV-versiota pyytämällä yhtä paikallista muutosta. Nykyinen tuotos pitää säilyä palautteen lähtökohtana.
+8. Aja LinkedIn ja Intering haluamassasi järjestyksessä. Tarkista oman äänen, korjausten ja rajausten välittyminen kaikkiin kolmeen. Vastuun laajuutta ei saa esittää saavutuksena. Aikatauluja tai vastuuta ei saa keksiä.
+9. Palaa kartoitukseen ja muuta tietoa. Vanha tuotos säilyy mutta näkyy vanhentuneena; hyväksyntä tarvitaan uudelleen, samoin kirjoittajan uudelleenajo. Vanhan CV:n PDF-lataus ja iterointi estetään.
+10. Lataa sivu uudelleen: työtä ei voi jatkaa eikä henkilötietoja löydy localStoragesta tai sessionStoragesta. GDPR-hyväksyntä ja mahdollinen ylläpitotoken ovat erillisiä asetuksia.
 
-## Vaihe 1: Käynnistys
+## Promptien päivitys
 
-```bash
-docker compose up --build -d
-docker compose logs -f backend  # eri terminaalissa, seuraa lokeja
-```
+1. Avaa admin asetetulla tokenilla. Kahdeksan moduulia näkyy ja aktiivinen lähde on selvä.
+2. Päivitä yhteisiä sääntöjä. Seuraava kirjoittajakutsu käyttää muutosta; kartoituksen GET-vastauksen prompt_checksums muuttuu ajetulle roolille.
+3. Palauta oletukseen. Muokkaa `prompts/yhteiset_saannot.md` tiedostona; seuraava kutsu käyttää uutta tiedostoa myös Dockerissa mountin kautta.
+4. Huomaa, että admin-ohitus voittaa versionhallintatiedoston kunnes ohitus poistetaan.
 
-Avaa selain: http://localhost/
+## Laadun arviointi
 
-**Tarkista**:
-- [ ] GDPR-banneri näkyy heti
-- [ ] Header näyttää "intering · CV-agentti" logon
-
-## Vaihe 2: Smoke test
-
-```bash
-bash scripts/smoke_test.sh
-```
-
-**Tarkista**:
-- [ ] Kaikki tarkistukset OK
-- [ ] Exit-koodi 0
-
-## Vaihe 3: Hyväksy GDPR ja avaa LandingPage
-
-**Tarkista**:
-- [ ] Hyväksy → modaali sulkeutuu
-- [ ] Hero näkyy: iso otsikko vasemmalla, 4 värillistä korttia oikealla
-- [ ] "Kolme vaihetta valmiiseen profiiliin" -osio näkyy
-- [ ] Footer alhaalla
-
-## Vaihe 4: Lataa materiaali
-
-Klikkaa "Aloita" → UploadPage.
-
-**Tarkista**:
-- [ ] Wizard-stepperi näkyy headerissa, "Lataa" korostettuna
-- [ ] Drag-and-drop CV-PDF onnistuu
-- [ ] LinkedIn-PDF ja teksti molemmat valittavissa
-- [ ] "Lataa ja jatka" toimii
-
-## Vaihe 5: Positiointikartoitus
-
-**Tarkista**:
-- [ ] "Aja kartoittaja" käynnistää spinnerin
-- [ ] Spinneri kestää 30–90 sek
-- [ ] Positiointidokumentti näkyy editoitavissa kentissä
-- [ ] Persoona (kartoittajan tuottama positioning_summary) tuntuu järkevältä
-- [ ] Muokkaa sävyä → "Tallenna muutokset" → "Muutokset tallennettu" -viesti
-- [ ] "Jatka kirjoittajiin" toimii
-
-## Vaihe 6: Kirjoittajat
-
-**Tarkista per kirjoittaja**:
-- [ ] LinkedIn: "Aja" → tulos näkyy. Headline lyhyt, About 1500–2000 merkkiä.
-- [ ] CV: "Aja" → tulos näkyy. "Lataa PDF" lataa toimivan PDF:n.
-- [ ] Intering: "Aja" → tulos näkyy. Hook 4-osaisessa pipe-formaatissa.
-- [ ] Iteroi LinkedIn lisäohjeella "lyhennä About 200 merkkiä" → uusi versio
-
-## Vaihe 7: Tulokset
-
-**Tarkista**:
-- [ ] LinkedIn-tekstit näkyvät kokonaan
-- [ ] CV-rakenne näkyy + "Lataa PDF" -painike toimii
-- [ ] Intering-osiot näkyvät 5 vaaditulla avaimella
-- [ ] "Aloita alusta" tyhjentää session ja palaa LandingPagelle
-
-## Vaihe 8: Admin (jos ADMIN_TOKEN asetettu)
-
-Avaa: `http://localhost/?admin=<token>`
-
-**Tarkista**:
-- [ ] 4 promptia näkyy textareassa
-- [ ] Muokkaa kartoittaja-promptia, "Tallenna" → ● Muokattu -merkki
-- [ ] Aja kartoittaja uudestaan eri profiililla → muutos näkyy outputissa
-- [ ] "Palauta oletukseen" → ○ Oletus -merkki, alkuperäinen sisältö palautuu
-- [ ] "Poistu admin-tilasta" → palaa normaalinäkymään
-
-## Vaihe 9: Sammutus
-
-```bash
-docker compose down
-```
-
-**Tarkista**:
-- [ ] Kaikki kontit sammuvat siististi
-
-## Havainnot
-
-Kirjaa tähän mahdolliset ongelmat, bugit tai parannusehdotukset:
-
-| Vaihe | Havainto | Vakavuus |
-|---|---|---|
-| | | |
+Kokeile sekä runsasta numeronäyttöä että niukkaa lähtöaineistoa. Arvioi kysymysten tarpeellisuus, oman äänen tunnistettavuus, todennetut laadulliset tulokset ja rehellinen oman vastuun kuvaus. Pelkkä automaattisten testien läpäisy ei varmista mallin kirjoittaman tekstin laatua.

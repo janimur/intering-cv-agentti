@@ -36,8 +36,8 @@ def client(tmp_path, monkeypatch):
     from backend.app import metrics
     importlib.reload(metrics)
 
-    with patch("backend.app.pdf_renderer.start_browser", new=AsyncMock(return_value=(MagicMock(), MagicMock()))), \
-         patch("backend.app.pdf_renderer.stop_browser", new=AsyncMock(return_value=None)):
+    with patch("backend.app.main.start_browser", new=AsyncMock(return_value=(MagicMock(), MagicMock()))), \
+         patch("backend.app.main.stop_browser", new=AsyncMock(return_value=None)):
         with TestClient(app) as c:
             yield c
 
@@ -64,10 +64,15 @@ def session_with_upload(client, tmp_path):
 @pytest.fixture
 def session_with_positioning(client, session_with_upload):
     """Sessio jossa positioning on ajettu (mockattu)."""
-    with patch("backend.app.api.positioning.run_kartoittaja", return_value=sample_positioning()):
+    from src.schemas import Assessment, MemberProfile
+    assessment = Assessment(positioning=sample_positioning(), profile=MemberProfile(), next_question=None)
+    with patch("backend.app.api.positioning.run_kartoittaja", return_value=sample_positioning()), patch("backend.app.api.positioning.run_clarification", return_value=assessment):
         response = client.post(
             "/api/positioning",
+            json={"revision": 0},
             headers={"X-Session-ID": session_with_upload},
         )
+    assert response.status_code == 200
+    response = client.post("/api/positioning/approve", json={"revision": response.json()["revision"]}, headers={"X-Session-ID": session_with_upload})
     assert response.status_code == 200
     return session_with_upload

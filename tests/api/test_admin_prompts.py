@@ -33,7 +33,8 @@ def test_list_prompts_returns_four_prompts(client, monkeypatch):
     monkeypatch.setenv("ADMIN_TOKEN", TOKEN)
     response = client.get("/api/admin/prompts", headers=HEADERS)
     data = response.json()
-    assert len(data) == 4
+    from src.prompts import PROMPT_NAMES
+    assert {p["name"] for p in data} == set(PROMPT_NAMES)
 
 
 def test_list_prompts_all_default_is_overlay_false(client, monkeypatch):

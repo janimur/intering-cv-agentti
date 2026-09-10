@@ -51,8 +51,8 @@ export function UploadPage({ onBack, onUploaded }: UploadPageProps) {
 
       <h1 className="mb-2">Lataa CV ja LinkedIn-profiili</h1>
       <p className="text-gray-600 mb-8">
-        CV on pakollinen. LinkedIn-profiili tuo kartoittajalle lisää kontekstia
-        ja oman äänensävysi.
+        CV on pakollinen, LinkedIn-profiili valinnainen. Täydennämme materiaalien
+        tietoja ja omaa ääntäsi tarkentavilla kysymyksillä.
       </p>
 
       <div className="card mb-6">

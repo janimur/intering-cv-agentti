@@ -7,6 +7,11 @@ const FRIENDLY_NAMES: Record<string, string> = {
   kirjoittaja_linkedin_system: "LinkedIn-kirjoittaja",
   kirjoittaja_cv_system: "CV-kirjoittaja",
   kirjoittaja_intering_system: "Intering-kirjoittaja",
+  yhteiset_saannot: "Yhteiset säännöt",
+  kartoituksen_ohje: "Kartoituksen ohje",
+  kartoituksen_analyysi: "Kartoituksen analyysi",
+  suomalainen_interim_markkina: "Suomalainen interim-markkina",
+  tyypilliset_interim_positiointikulmat: "Tyypilliset interim-positiointikulmat",
 };
 
 export function AdminPage() {
@@ -96,8 +101,10 @@ export function AdminPage() {
       <h1 className="mb-2">Admin: Promptit</h1>
       <p className="text-gray-600 mb-8">
         Muokkaa promptteja ilman koodimuutoksia. Tallennetut muutokset tulevat
-        voimaan valittomasti seuraavissa ajossa. Muokkaukset sailyvat palvelimen
-        uudelleenkaynnisteissa mutta ne ovat erillaan git-historiasta.
+        voimaan seuraavassa ajossa. Muokkaukset säilyvät palvelimen
+        uudelleenkäynnistyksissä erillään git-historiasta. Muokattu tiedosto
+        data/prompts-kansiossa ohittaa prompts-kansion oletuksen. Myös tiedoston
+        suora päivitys vaikuttaa seuraavaan ajoon.
       </p>
 
       <div className="space-y-8">

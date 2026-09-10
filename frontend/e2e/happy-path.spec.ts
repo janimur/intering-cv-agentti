@@ -1,183 +1,64 @@
 import { test, expect } from '@playwright/test';
+import { sampleWorkflow, sampleCv, samplePositioning } from '../src/test/fixtures';
+import type { WorkflowState } from '../src/types/api';
 
-// Yksi happy path: GDPR → upload → positioning → writers → output → PDF
-test('käyttäjä käy koko wizardin läpi onnistuneesti', async ({ page }) => {
-  const sessionId = 'e2e-test-session';
-
-  // Nollaa GDPR-hyväksyntä ennen sivun latausta jotta banneri näkyy
-  await page.addInitScript(() => {
-    localStorage.removeItem('intering_gdpr_accepted');
+test('kartoitus, oma ääni, hyväksyntä ja pelkkä CV sekä vanhentuneen tekstin merkintä', async ({ page }, testInfo) => {
+  let state: WorkflowState = { ...sampleWorkflow, status: 'uploaded', revision: 0, approved_revision: null, positioning: null };
+  await page.route((url) => url.pathname.startsWith('/api/'), async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const body = route.request().method() === 'GET' || path === '/api/upload' ? {} : route.request().postDataJSON();
+    let data: unknown;
+    if (path === '/api/gdpr') data = { content: 'Tietosuojaseloste' };
+    else if (path === '/api/upload') data = { session_id: 'sid', cv_text_preview: 'CV', linkedin_available: false };
+    else if (path === '/api/positioning' && route.request().method() === 'GET') data = state;
+    else if (path === '/api/positioning' && route.request().method() === 'POST') {
+      expect(body.revision).toBe(0);
+      state = { ...state, revision: 1, status: 'clarifying', positioning: samplePositioning, current_question: { id: 'q1', topic: 'voice', text: 'Miten aloitat toimeksiannon?' } }; data = state;
+    } else if (path === '/api/positioning/answers') {
+      expect(body.text).toBe('Kuuntelen tiimiä ennen päätöksiä.');
+      state = { ...state, revision: 2, status: 'review', current_question: null, profile: { ...state.profile, voice_examples: [body.text] } }; data = state;
+    } else if (path === '/api/positioning/approve') {
+      expect(body.revision).toBe(state.revision);
+      state = { ...state, revision: state.revision + 1, approved_revision: state.revision + 1, status: 'approved' }; data = state;
+    } else if (path === '/api/positioning' && route.request().method() === 'PATCH') {
+      state = { ...state, revision: state.revision + 1, approved_revision: null, status: 'review', profile: body.profile, positioning: body.positioning }; data = state;
+    } else if (path === '/api/writers/cv') {
+      expect(state.status).toBe('approved'); expect(body.revision).toBe(state.revision);
+      data = { ...sampleCv, source_revision: state.revision };
+    } else if (path === '/api/cv/pdf') {
+      return route.fulfill({ contentType: 'application/pdf', body: Buffer.from('%PDF-1.4 mock') });
+    } else throw new Error(`Unexpected API call: ${path}`);
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
   });
-
-  // Mockaa kaikki /api/-pyynnöt
-  await page.route('**/api/gdpr', async (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ content: '# Tietosuojaseloste\n\nMock-sisältö.' }),
-    })
-  );
-
-  await page.route('**/api/upload', async (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        session_id: sessionId,
-        cv_text_preview: 'CV-teksti...',
-        linkedin_available: true,
-      }),
-    })
-  );
-
-  await page.route('**/api/positioning', async (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        positioning: {
-          primary_angle: 'Testaaja',
-          target_buyers: ['CEO'],
-          target_situations: ['Skaalaus'],
-          differentiators: ['Operaattori'],
-        },
-        evidence: {
-          flagship_story: {
-            context: 'Yritys X',
-            action: 'Skaalasin',
-            result_quantified: '€2M → €20M',
-          },
-          supporting_results: [],
-          expertise_areas: ['GTM'],
-        },
-        key_messages: {
-          one_liner: 'Skaalaaja',
-          elevator_pitch: 'Olen operaattori.',
-          proof_points: ['€2M → €20M', '10x', '200 konsulttia'],
-        },
-        preferences: { tone: 'Suora', exclusions: [] },
-      }),
-    })
-  );
-
-  await page.route('**/api/writers/linkedin', async (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        headline: 'Interim CEO | Skaalaaja',
-        about: 'Mock About -teksti'.repeat(50),
-        experience: [
-          {
-            role: 'Interim CEO',
-            company: 'Yritys X',
-            context: 'Skaalaus',
-            achievements: ['10x kasvu', 'P&L €25M', '200 konsulttia'],
-          },
-        ],
-      }),
-    })
-  );
-
-  await page.route('**/api/writers/cv', async (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        header: {
-          name: 'Testi Henkilö',
-          title: 'Interim CEO',
-          contact: { email: 't@e.com', phone: null, location: null, linkedin: null },
-        },
-        positioning_summary: 'Operaattori, ei konsultti.',
-        key_results: ['€2M → €20M', '10x', '200 konsulttia'],
-        expertise: ['GTM'],
-        experience: [
-          {
-            role: 'CEO',
-            company: 'X',
-            period: '1/2020 – 1/2024',
-            context: 'Skaalaus.',
-            results: ['10x kasvu', 'P&L €25M'],
-          },
-        ],
-        education: [],
-        certifications: [],
-      }),
-    })
-  );
-
-  await page.route('**/api/writers/intering', async (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        hook: 'Skaalaaja | IT | €5–€30M | Operaattori',
-        product_cards: ['Kortti 1.', 'Kortti 2.'],
-        profile_sections: {
-          'Kuka minä olen?': 'Olen operaattori.',
-          'Miksi juuri minä olen timanttinen interim?': 'Tehnyt itse.',
-          'Tehtävät joihin sovin parhaiten': 'Skaalaus, GTM.',
-          'Aikaisempi kokemus': 'B2B-palveluyritykset.',
-          'Aikaisempi Interim-kokemus': '10 vuotta.',
-        },
-      }),
-    })
-  );
-
-  await page.route('**/api/cv/pdf', async (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/pdf',
-      body: Buffer.from('%PDF-1.4 mock pdf bytes'),
-    })
-  );
-
-  // Vaihe 1: avaa sivu, hyväksy GDPR
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 2, name: /tietosuoja/i })).toBeVisible();
-  await page.getByRole('button', { name: 'Hyväksyn' }).click();
-
-  // Vaihe 2: LandingPage → Aloita
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Myyvempi CV');
-  // Käytä ensimmäistä "Aloita"-painiketta (hero-section)
-  const aloitaButtons = page.getByRole('button', { name: 'Aloita' });
-  await aloitaButtons.first().click();
-
-  // Vaihe 3: UploadPage — lataa fake-tiedosto
-  await expect(page.getByRole('heading', { level: 1, name: /lataa cv/i })).toBeVisible();
-  const fileInputs = page.locator('input[type="file"]');
-  await fileInputs.first().setInputFiles({
-    name: 'cv.pdf',
-    mimeType: 'application/pdf',
-    buffer: Buffer.from('%PDF-1.4 mock cv'),
-  });
-  await page.getByRole('button', { name: /lataa ja jatka/i }).click();
-
-  // Vaihe 4: PositioningPage — aja kartoittaja
-  await expect(page.getByRole('heading', { level: 1, name: /positiointikartoitus/i })).toBeVisible();
-  // Klikkaa "Aja kartoittaja" -painiketta (voi olla useita — otetaan ensimmäinen enabled)
-  await page.getByRole('button', { name: /aja kartoittaja/i }).first().click();
-
-  // Odota että positiointidokumentti renderöityy (PositioningEditor latautuu)
-  await expect(page.getByText(/positiointikulma/i)).toBeVisible({ timeout: 10000 });
-
-  // Jatka kirjoittajiin
-  await page.getByRole('button', { name: /jatka kirjoittajiin/i }).click();
-
-  // Vaihe 5: WritersPage — aja LinkedIn-kirjoittaja
-  await expect(page.getByRole('heading', { level: 1, name: /kirjoittajat/i })).toBeVisible();
-  // LinkedIn-kortti: etsi h3:sta "LinkedIn" ja klikkaa sen containerin "Aja"-painiketta
-  const linkedInCard = page.locator('.card').filter({ has: page.locator('h3', { hasText: 'LinkedIn' }) }).first();
-  await linkedInCard.getByRole('button', { name: 'Aja' }).click();
-
-  // Odota että LinkedIn-headline näkyy
-  await expect(page.getByText('Interim CEO | Skaalaaja')).toBeVisible({ timeout: 10000 });
-
-  // Jatka katsomaan tulokset
-  await page.getByRole('button', { name: /jatka katselmaan tulokset/i }).click();
-
-  // Vaihe 6: OutputPage — tulokset näkyvät
-  await expect(page.getByRole('heading', { level: 1, name: /tulokset/i })).toBeVisible();
-  await expect(page.getByText('Interim CEO | Skaalaaja').first()).toBeVisible();
+  await page.getByRole('button', { name: 'Hyväksyn', exact: true }).click();
+  await page.getByRole('button', { name: 'Aloita', exact: true }).first().click();
+  await page.locator('input[type=file]').first().setInputFiles({ name: 'cv.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 mock') });
+  await page.getByRole('button', { name: 'Lataa ja jatka' }).click();
+  await page.getByRole('button', { name: 'Aja kartoittaja' }).click();
+  await page.getByLabel('Miten aloitat toimeksiannon?').fill('Kuuntelen tiimiä ennen päätöksiä.');
+  await page.screenshot({ path: testInfo.outputPath('clarification.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Vastaa ja jatka' }).click();
+  await expect(page.getByLabel(/Oma ääneni/)).toHaveValue('Kuuntelen tiimiä ennen päätöksiä.');
+  await page.screenshot({ path: testInfo.outputPath('review.png'), fullPage: true });
+  await expect(page.getByRole('button', { name: 'Jatka kirjoittajiin' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Hyväksy positiointi' }).click();
+  await page.getByRole('button', { name: 'Jatka kirjoittajiin' }).click();
+  const card = page.locator('.card').filter({ has: page.getByRole('heading', { name: 'CV', exact: true }) });
+  await card.getByRole('button', { name: 'Aja', exact: true }).click();
+  await expect(card.getByText('Testi Henkilö — Interim CEO')).toBeVisible();
+  await page.getByRole('button', { name: 'Jatka katsomaan tulokset' }).click();
+  await expect(page.getByRole('heading', { name: 'Tulokset', exact: true })).toBeVisible();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Lataa PDF' }).click();
+  expect((await download).suggestedFilename()).toBe('cv.pdf');
+  await page.getByRole('button', { name: 'Takaisin kirjoittajiin' }).click();
+  await page.getByRole('button', { name: 'Takaisin', exact: true }).click();
+  await page.getByLabel('Toivomani toimeksiannot').fill('Teollisuuden muutosjohtaminen');
+  await page.getByRole('button', { name: 'Hyväksy positiointi' }).click();
+  await page.getByRole('button', { name: 'Jatka kirjoittajiin' }).click();
+  await expect(page.getByText(/Tämä teksti perustuu aiempiin tietoihin/)).toBeVisible();
+  await expect(card.getByRole('button', { name: 'Lataa PDF' })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole('button', { name: 'Aloita', exact: true }).first()).toBeVisible();
 });

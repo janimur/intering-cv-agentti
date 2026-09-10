@@ -9,22 +9,23 @@ interface StringListEditorProps {
   label: string;
   items: string[];
   onChange: (items: string[]) => void;
+  maxItems?: number;
 }
 
-function StringListEditor({ label, items, onChange }: StringListEditorProps) {
+function StringListEditor({ label, items, onChange, maxItems }: StringListEditorProps) {
   const updateItem = (index: number, value: string) => {
     const next = [...items];
     next[index] = value;
     onChange(next);
   };
 
-  const addItem = () => onChange([...items, ""]);
+  const addItem = () => { if (!maxItems || items.length < maxItems) onChange([...items, ""]); };
 
   const removeItem = (index: number) =>
     onChange(items.filter((_, i) => i !== index));
 
   return (
-    <div className="mb-4">
+    <div className="mb-4" role="group" aria-label={label}>
       <label className="block text-sm font-medium text-gray-700 mb-1">
         {label}
       </label>
@@ -32,6 +33,7 @@ function StringListEditor({ label, items, onChange }: StringListEditorProps) {
         <div key={i} className="flex gap-2 mb-1.5">
           <input
             type="text"
+            aria-label={`${label} ${i + 1}`}
             value={item}
             onChange={(e) => updateItem(i, e.target.value)}
             className="input-field flex-1 px-3 py-1.5"
@@ -46,6 +48,7 @@ function StringListEditor({ label, items, onChange }: StringListEditorProps) {
       ))}
       <button
         onClick={addItem}
+        disabled={maxItems !== undefined && items.length >= maxItems}
         className="text-xs px-3 py-1.5 rounded-lg text-intering-500 hover:bg-intering-50 mt-1 transition-colors font-medium"
       >
         + Lisää
@@ -107,6 +110,7 @@ export function PositioningEditor({
         <h3 className="mb-4">
           Päätarina (flagship story)
         </h3>
+        {!evidence.flagship_story ? <div><p className="text-sm text-gray-600 mb-3">Päätarinaa ei ole vielä vahvistettu. Sen voi jättää puuttumaan.</p><button type="button" className="btn-secondary" onClick={() => update("evidence.flagship_story", { context: "", action: "", result_quantified: "" })}>Lisää päätarina</button></div> : <>
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Konteksti
@@ -149,6 +153,27 @@ export function PositioningEditor({
             className="input-field"
           />
         </div>
+        <button type="button" className="text-sm text-gray-600 underline" onClick={() => update("evidence.flagship_story", null)}>Poista päätarina</button>
+        </>}
+      </section>
+
+      <section>
+        <h3 className="mb-4">Tukevat näytöt ja osaaminen</h3>
+        <p className="text-sm text-gray-600 mb-4">Myös laadullinen tulos kelpaa. Korjaa tai poista tieto, jota ei voi käyttää teksteissä.</p>
+        {evidence.supporting_results.map((result, index) => (
+          <fieldset key={index} className="border border-gray-200 rounded-lg p-4 mb-4">
+            <legend className="text-sm font-medium">Näyttö {index + 1}</legend>
+            {([["metric", "Mittari tai tuloksen kuvaus"], ["value", "Tulos tai arvo"], ["context", "Tilanne ja oma osuus"]] as const).map(([key, label]) => (
+              <label key={key} className="block text-sm mb-3">
+                {label}
+                <textarea className="input-field mt-1" rows={2} value={result[key]} onChange={(e) => update("evidence.supporting_results", evidence.supporting_results.map((item, i) => i === index ? { ...item, [key]: e.target.value } : item))} />
+              </label>
+            ))}
+            <button type="button" className="text-sm text-gray-600 underline" onClick={() => update("evidence.supporting_results", evidence.supporting_results.filter((_, i) => i !== index))}>Poista näyttö</button>
+          </fieldset>
+        ))}
+        <button type="button" className="btn-secondary mb-4" onClick={() => update("evidence.supporting_results", [...evidence.supporting_results, { metric: "", value: "", context: "" }])}>Lisää tukeva näyttö</button>
+        <StringListEditor label="Osaamisalueet" items={evidence.expertise_areas} onChange={(items) => update("evidence.expertise_areas", items)} />
       </section>
 
       <section>
@@ -180,6 +205,7 @@ export function PositioningEditor({
         <StringListEditor
           label="Todistuspisteet (proof points)"
           items={key_messages.proof_points}
+          maxItems={5}
           onChange={(v) => update("key_messages.proof_points", v)}
         />
       </section>

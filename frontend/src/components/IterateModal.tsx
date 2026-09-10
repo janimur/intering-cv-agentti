@@ -19,17 +19,17 @@ export function IterateModal({
   onClose,
   onDone,
 }: IterateModalProps) {
-  const { sessionId, setLoading, setError } = useSession();
+  const { sessionId, workflow, setLoading, setError } = useSession();
   const [note, setNote] = useState("");
   const [running, setRunning] = useState(false);
 
   const handleRun = async () => {
-    if (!sessionId || !note.trim()) return;
+    if (!sessionId || !note.trim() || workflow?.status !== "approved") return;
     setRunning(true);
     setLoading(writerType, true);
     setError(writerType, null);
     try {
-      const payload: IteratePayload = { note: note.trim() };
+      const payload: IteratePayload = { revision: workflow.revision, note: note.trim() };
       const result = await api.iterateWriter(sessionId, writerType, payload);
       onDone(result as LinkedInOutput | CVDocument | InteringOutput);
       onClose();

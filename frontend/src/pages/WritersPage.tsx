@@ -41,8 +41,8 @@ export function WritersPage({ onBack, onContinue }: WritersPageProps) {
     <div>
       <h1 className="mb-2">Kirjoittajat</h1>
       <p className="text-gray-600 mb-8">
-        Aja kukin kirjoittaja erikseen. Voit iteroida tuloksia ja antaa lisäohjeita
-        ennen jatkamista.
+        Valitse tarvitsemasi tekstit missä järjestyksessä tahansa. Voit tuottaa
+        myös vain yhden materiaalin ja muokata sitä lisäohjeilla.
       </p>
 
       {pdfError && (
@@ -75,7 +75,7 @@ export function WritersPage({ onBack, onContinue }: WritersPageProps) {
         </button>
         {hasAnyOutput && (
           <button onClick={onContinue} className="btn-primary">
-            Jatka katselmaan tulokset
+            Jatka katsomaan tulokset
           </button>
         )}
       </div>

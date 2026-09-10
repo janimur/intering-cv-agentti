@@ -48,37 +48,14 @@ def test_linkedin_headline_max_length_ok():
     assert len(output.headline) == 220
 
 
-def test_experience_entry_results_min_length():
-    """ExperienceEntry.results 1 alkio → ValidationError (min_length=2)."""
-    with pytest.raises(ValidationError):
-        ExperienceEntry(
-            role="CEO",
-            company="Yritys",
-            period="1/2020 – 1/2021",
-            context="Konteksti.",
-            results=["Vain yksi tulos"],
-        )
-
-
-def test_positioning_target_buyers_empty():
-    """Positioning.target_buyers tyhjä → ValidationError."""
-    with pytest.raises(ValidationError):
-        Positioning(
-            primary_angle="Testaaja",
-            target_buyers=[],
-            target_situations=["Skaalausvaihe"],
-            differentiators=["Operaattori"],
-        )
-
-
-def test_key_messages_proof_points_too_few():
-    """KeyMessages.proof_points 2 alkiota → ValidationError (min 3)."""
-    with pytest.raises(ValidationError):
-        KeyMessages(
-            one_liner="Lyhyt.",
-            elevator_pitch="Pidempi.",
-            proof_points=["Yksi", "Kaksi"],
-        )
+def test_sparse_evidence_is_valid():
+    doc = sample_positioning()
+    doc.evidence.flagship_story = None
+    doc.key_messages.proof_points = []
+    doc.positioning.target_buyers = []
+    assert type(doc).model_validate(doc.model_dump()) == doc
+    role = ExperienceEntry(role="CEO", company="Yritys", period="2026", context="Johdin muutosta", results=[])
+    assert role.results == []
 
 
 def test_key_messages_proof_points_too_many():
@@ -111,14 +88,8 @@ def test_key_messages_proof_points_exactly_5_ok():
     assert len(km.proof_points) == 5
 
 
-def test_intering_output_product_cards_too_few():
-    """InteringOutput.product_cards 1 alkio → ValidationError."""
-    with pytest.raises(ValidationError):
-        InteringOutput(
-            hook="Skaalaaja | IT | €5–€30M | Operaattori",
-            product_cards=["Vain yksi kortti."],
-            profile_sections={"Kuka?": "Olen."},
-        )
+def test_intering_output_single_card_is_valid():
+    assert InteringOutput(hook="A | B | C | D", product_cards=["Kortti"], profile_sections={}).product_cards == ["Kortti"]
 
 
 def test_sample_positioning_validates():

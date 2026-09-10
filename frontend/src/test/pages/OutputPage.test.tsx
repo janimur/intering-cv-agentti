@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode, useEffect } from 'react';
 import { OutputPage } from '../../pages/OutputPage';
 import { SessionProvider, useSession } from '../../store/SessionContext';
-import { sampleLinkedIn, sampleCv, sampleIntering } from '../fixtures';
+import { sampleLinkedIn, sampleCv, sampleIntering, sampleWorkflow } from '../fixtures';
 import type { LinkedInOutput, CVDocument, InteringOutput } from '../../types/api';
 
 vi.mock('../../api/client', () => ({
@@ -42,6 +42,7 @@ function makeWrapper(state: SessionState = {}) {
     const ctx = useSession();
     useEffect(() => {
       if (state.sessionId !== undefined) ctx.setSessionId(state.sessionId);
+      ctx.setWorkflow(sampleWorkflow);
       if (state.linkedinOutput !== undefined) ctx.setLinkedinOutput(state.linkedinOutput);
       if (state.cvOutput !== undefined) ctx.setCvOutput(state.cvOutput);
       if (state.interingOutput !== undefined) ctx.setInteringOutput(state.interingOutput);
