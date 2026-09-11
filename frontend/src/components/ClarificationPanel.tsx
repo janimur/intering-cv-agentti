@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LoadingIndicator } from "./LoadingIndicator";
 import type { AnswerDisposition, ClarificationQuestion } from "../types/api";
 
 export function ClarificationPanel({ question, disabled, onAnswer, onFinish }: {
@@ -13,6 +14,7 @@ export function ClarificationPanel({ question, disabled, onAnswer, onFinish }: {
       <label htmlFor="clarification-answer" className="block text-lg font-semibold mb-3">{question.text}</label>
       <p className="text-sm text-gray-600 mb-4">Kerro omin sanoin. Vastauksesi auttaa kuvaamaan sekä osaamistasi että tapaasi toimia. Älä kirjoita salassa pidettäviä tietoja: voit ohittaa aiheen julkaisematta vastaustasi.</p>
       <textarea id="clarification-answer" value={text} onChange={(e) => setText(e.target.value)} rows={5} className="input-field" disabled={disabled} />
+      {disabled && <div className="text-intering-500 mt-3"><LoadingIndicator label="Käsitellään vastaustasi…" /></div>}
       <div className="flex flex-wrap gap-3 mt-4">
         <button className="btn-primary" disabled={disabled || !text.trim()} onClick={() => void onAnswer(text.trim(), "answered")}>Vastaa ja jatka</button>
         <button className="btn-secondary" disabled={disabled} onClick={() => void onAnswer("", "skipped")}>Ohita kysymys</button>
