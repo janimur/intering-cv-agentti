@@ -1,0 +1,160 @@
+name: Deploy production
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy after publishing (disable for first GHCR bootstrap)
+        type: boolean
+        default: true
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: intering-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require main branch
+        env:
+          DEPLOY_REF: ${{ github.ref }}
+        run: test "$DEPLOY_REF" = refs/heads/main
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
+      - run: uv sync --frozen
+      - run: uv run pytest tests/unit tests/api
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm test && npm run lint && npm run build
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e -- --project=chromium
+        working-directory: frontend
+      - name: Validate deployment files
+        run: |
+          bash -n deploy/intering-deploy
+          shellcheck deploy/intering-deploy
+          BACKEND_IMAGE=ghcr.io/janimur/intering-cv-agentti-backend@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
+          WEB_IMAGE=ghcr.io/janimur/intering-cv-agentti-web@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb \
+          ANTHROPIC_API_KEY=validation-only ADMIN_TOKEN=validation-only \
+          docker compose -f compose.production.yml config --quiet
+
+  publish:
+    needs: test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      backend_digest: ${{ steps.digests.outputs.backend_digest }}
+      web_digest: ${{ steps.digests.outputs.web_digest }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build backend
+        id: backend
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          load: true
+          platforms: linux/amd64
+          tags: ghcr.io/janimur/intering-cv-agentti-backend:${{ github.sha }}
+          labels: org.opencontainers.image.source=https://github.com/janimur/intering-cv-agentti
+      - name: Build web
+        id: web
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile.production
+          load: true
+          platforms: linux/amd64
+          tags: ghcr.io/janimur/intering-cv-agentti-web:${{ github.sha }}
+          labels: org.opencontainers.image.source=https://github.com/janimur/intering-cv-agentti
+
+      - name: Smoke test actual images before publishing
+        env:
+          BACKEND_IMAGE: ghcr.io/janimur/intering-cv-agentti-backend:${{ github.sha }}
+          WEB_IMAGE: ghcr.io/janimur/intering-cv-agentti-web:${{ github.sha }}
+          ANTHROPIC_API_KEY: smoke-test-no-model-calls
+          ADMIN_TOKEN: smoke-test-only
+        run: |
+          set -euo pipefail
+          trap 'docker compose -p intering-smoke -f compose.production.yml down --volumes --remove-orphans' EXIT
+          docker run --rm --entrypoint /app/.venv/bin/python "$BACKEND_IMAGE" -c \
+            'from src.prompts import compose_prompt; from pathlib import Path; assert len(compose_prompt("kartoittaja_system")) > 100; assert Path("backend/static/gdpr.md").is_file()'
+          docker compose -p intering-smoke -f compose.production.yml up -d --wait --wait-timeout 120
+          curl --fail --silent http://127.0.0.1:8081/healthz
+          curl --fail --silent http://127.0.0.1:8081/api/health
+          curl --fail --silent http://127.0.0.1:8081/api/gdpr > /dev/null
+          curl --fail --silent http://127.0.0.1:8081/ | grep -q 'id="root"'
+      - name: Publish tested images and record registry digests
+        id: digests
+        env:
+          BACKEND_IMAGE: ghcr.io/janimur/intering-cv-agentti-backend:${{ github.sha }}
+          WEB_IMAGE: ghcr.io/janimur/intering-cv-agentti-web:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          docker push "$BACKEND_IMAGE"
+          docker push "$WEB_IMAGE"
+          backend_ref=$(docker image inspect "$BACKEND_IMAGE" --format '{{index .RepoDigests 0}}')
+          web_ref=$(docker image inspect "$WEB_IMAGE" --format '{{index .RepoDigests 0}}')
+          backend_digest=${backend_ref##*@}
+          web_digest=${web_ref##*@}
+          [[ "$backend_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          [[ "$web_digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          printf 'backend_digest=%s\nweb_digest=%s\n' "$backend_digest" "$web_digest" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    if: ${{ inputs.deploy }}
+    needs: publish
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - name: Deploy immutable image pair
+        env:
+          BACKEND_DIGEST: ${{ needs.publish.outputs.backend_digest }}
+          WEB_DIGEST: ${{ needs.publish.outputs.web_digest }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$BACKEND_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          [[ "$WEB_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          keydir=$(mktemp -d)
+          trap 'rm -rf "$keydir"' EXIT
+          chmod 700 "$keydir"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$keydir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$keydir/known_hosts"
+          chmod 600 "$keydir/key" "$keydir/known_hosts"
+          printf '%s\n%s\n' \
+            "ghcr.io/janimur/intering-cv-agentti-backend@$BACKEND_DIGEST" \
+            "ghcr.io/janimur/intering-cv-agentti-web@$WEB_DIGEST" > "$keydir/release"
+          ssh -T -i "$keydir/key" -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$keydir/known_hosts" \
+            -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=20 \
+            "$DEPLOY_USER@$DEPLOY_HOST" < "$keydir/release"
