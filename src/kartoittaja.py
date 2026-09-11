@@ -1,83 +1,51 @@
 import json
 from anthropic import Anthropic
+
+from src.model_calls import validated_call
 from src.prompts import compose_prompt
-from src.schemas import Assessment, WorkflowState, PositioningDocument, to_tool_input_schema
+from src.schemas import Assessment, AssessmentUpdate, WorkflowState, PositioningDocument, to_tool_input_schema
 
 
-def run_kartoittaja(
-    cv_text: str,
-    linkedin_text: str | None = None,
-    baseline_text: str | None = None,
-    system_prompt: str | None = None,
-) -> PositioningDocument:
-    """
-    Ajaa kartoittaja-agentin Claude Opus 4.7:llä adaptive thinking päällä.
-    Palauttaa validoidun PositioningDocument-objektin.
-
-    Tuotannossa input on cv_text + (mahdollisesti) linkedin_text.
-    baseline_text on testikäyttöä varten, jossa lisämateriaali on käsin koottua.
-    Jos lähteet ovat ristiriidassa, prompti ohjaa luottamaan CV:hen.
-
-    Huomio: Opus 4.7 käyttää adaptive thinkingiä ja output_config.effort -kontrollia.
-    Temperature=1 koska thinking vaatii sen.
-    """
-    client = Anthropic()
-    system_prompt = system_prompt or compose_prompt("kartoittaja_system")
-
-    sections = [f"## CV-teksti\n\n{cv_text}"]
-    if linkedin_text:
-        sections.append(f"## LinkedIn-profiilin teksti (nykyinen)\n\n{linkedin_text}")
-    if baseline_text:
-        sections.append(f"## Lisämateriaali (perustiedot)\n\n{baseline_text}")
-    user_content = "\n\n".join(sections)
-
-    response = client.messages.create(
-        model="claude-opus-4-7",
-        max_tokens=8000,
-        temperature=1,
-        thinking={"type": "adaptive"},
-        output_config={"effort": "high"},
-        system=system_prompt,
-        messages=[{"role": "user", "content": user_content}],
-        tools=[
-            {
-                "name": "save_positioning_document",
-                "description": "Tallenna positiointidokumentti strukturoituna JSON:na",
-                "input_schema": to_tool_input_schema(PositioningDocument),
-            }
-        ],
+def run_initial_assessment(cv_text: str, linkedin_text: str | None = None,
+                           system_prompt: str | None = None,
+                           baseline_text: str | None = None) -> Assessment:
+    """Analyze once, returning positioning, profile, and the first useful question."""
+    return validated_call(
+        Anthropic(max_retries=0, timeout=280), role="initial_assessment", schema=Assessment,
+        tool_name="save_assessment", retry_max_tokens=16000,
+        model="claude-opus-4-7", max_tokens=8000,
+        thinking={"type": "adaptive"}, output_config={"effort": "high"},
+        system=system_prompt or compose_prompt("kartoittaja_system"),
+        messages=[{"role": "user", "content": json.dumps({
+            "cv": cv_text, "linkedin": linkedin_text, "baseline": baseline_text,
+            "task": "Analysoi aineisto ja palauta koko Assessment sekä ensimmäinen tarpeellinen tarkennuskysymys.",
+        }, ensure_ascii=False)}],
+        tools=[{"name": "save_assessment", "description": "Tallenna alkuanalyysi, profiili ja seuraava kysymys.",
+                "input_schema": to_tool_input_schema(Assessment)}],
         tool_choice={"type": "auto"},
     )
 
-    if response.stop_reason != "tool_use":
-        raise RuntimeError(
-            f"Kartoittaja ei kutsunut työkalua. stop_reason={response.stop_reason}, "
-            "Tarkista mallin vastaussopimus."
-        )
 
-    tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
-    if not tool_use_blocks:
-        raise RuntimeError("Vastauksesta ei löytynyt tool_use-blokkia")
-
-    raw_dict = tool_use_blocks[0].input
-    return PositioningDocument.model_validate(raw_dict)
+def run_kartoittaja(cv_text: str, linkedin_text: str | None = None,
+                    baseline_text: str | None = None,
+                    system_prompt: str | None = None) -> PositioningDocument:
+    """Compatibility entrypoint for the standalone evaluation script."""
+    return run_initial_assessment(cv_text, linkedin_text, system_prompt, baseline_text).positioning
 
 
 def run_clarification(cv_text: str, linkedin_text: str | None, state: WorkflowState,
-                      system_prompt: str | None = None) -> Assessment:
-    """Update the proposed profile and choose at most one unanswered topic."""
-    response = Anthropic().messages.create(
-        model="claude-opus-4-7", max_tokens=8000,
+                      system_prompt: str | None = None) -> AssessmentUpdate:
+    """Return only changed typed sections/profile fields, never rewrite the whole assessment."""
+    return validated_call(
+        Anthropic(max_retries=0, timeout=280), role="clarification", schema=AssessmentUpdate,
+        tool_name="save_assessment_update", retry_max_tokens=8000,
+        model="claude-opus-4-7", max_tokens=4000,
         system=system_prompt or compose_prompt("kartoittaja_system"),
         messages=[{"role": "user", "content": json.dumps({
-            "cv": cv_text, "linkedin": linkedin_text,
-            "kartoitus": state.model_dump(),
+            "cv": cv_text, "linkedin": linkedin_text, "kartoitus": state.model_dump(),
+            "task": "Palauta vain viimeisen vastauksen muuttamat osiot/kentät ja seuraava tarpeellinen kysymys. Muut tiedot säilytetään backendissä.",
         }, ensure_ascii=False)}],
-        tools=[{"name": "save_assessment", "description": "Päivitä kartoitus ja seuraava tarpeellinen kysymys tai null.",
-                "input_schema": to_tool_input_schema(Assessment)}],
-        tool_choice={"type": "tool", "name": "save_assessment"},
+        tools=[{"name": "save_assessment_update", "description": "Muuttuneet osiot ja profiilikentät sekä seuraava kysymys.",
+                "input_schema": to_tool_input_schema(AssessmentUpdate)}],
+        tool_choice={"type": "tool", "name": "save_assessment_update"},
     )
-    blocks = [b for b in response.content if b.type == "tool_use" and b.name == "save_assessment"]
-    if response.stop_reason != "tool_use" or len(blocks) != 1:
-        raise RuntimeError("Kartoituksen vastaus ei vastannut työkalusopimusta")
-    return Assessment.model_validate(blocks[0].input)

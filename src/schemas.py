@@ -167,3 +167,34 @@ class AnswerRequest(RevisionRequest):
         if self.disposition == "answered" and not self.text.strip():
             raise ValueError("Vastaus ei saa olla tyhjä")
         return self
+
+
+class EvidenceReplacement(Evidence):
+    # Whole-section replacement must explicitly keep or remove the flagship.
+    flagship_story: FlagshipStory | None
+
+
+class PositioningSections(BaseModel):
+    """Only supplied non-null sections replace corresponding existing sections."""
+    model_config = {"extra": "forbid"}
+    positioning: Positioning | None = None
+    evidence: EvidenceReplacement | None = None
+    key_messages: KeyMessages | None = None
+    preferences: Preferences | None = None
+
+
+class ProfileUpdates(BaseModel):
+    model_config = {"extra": "forbid"}
+    additional_facts: list[str] | None = None
+    corrections: list[str] | None = None
+    goals: list[str] | None = None
+    working_style: list[str] | None = None
+    voice_examples: list[str] | None = None
+    exclusions: list[str] | None = None
+
+
+class AssessmentUpdate(BaseModel):
+    model_config = {"extra": "forbid"}
+    positioning_updates: PositioningSections = Field(default_factory=PositioningSections)
+    profile_updates: ProfileUpdates = Field(default_factory=ProfileUpdates)
+    next_question: QuestionProposal | None

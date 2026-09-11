@@ -4,11 +4,37 @@ Jaetut fixturet FastAPI TestClient -testeille.
 import asyncio
 import importlib
 import pytest
+import httpx
+import time
+from uuid import uuid4
 from unittest.mock import patch, MagicMock, AsyncMock
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
 from tests._fixtures import sample_positioning, sample_cv, sample_linkedin, sample_intering
+
+
+class WorkflowTestClient(TestClient):
+    """Existing workflow tests assert completed domain outcomes.
+
+    Exercise the real 202 + GET protocol here; protocol/concurrency tests use
+    client.request directly to observe the initial response without waiting.
+    """
+    def post(self, url, **kwargs):
+        is_model = str(url) in {"/api/positioning", "/api/positioning/answers"} or str(url).startswith("/api/writers/")
+        if is_model:
+            kwargs["headers"] = {**kwargs.get("headers", {}), "Idempotency-Key": str(uuid4())}
+        response = super().post(url, **kwargs)
+        if not is_model or response.status_code != 202:
+            return response
+        for _ in range(200):
+            op = self.get("/api/operations/" + response.json()["id"], headers=kwargs["headers"]).json()
+            if op["status"] == "succeeded":
+                return httpx.Response(200, json=op["result"], request=response.request)
+            if op["status"] == "failed":
+                return httpx.Response(op["error"]["status"], json={"detail": op["error"]["detail"]}, request=response.request)
+            time.sleep(0.005)
+        raise AssertionError("Mocked operation did not finish")
 
 
 @pytest.fixture(autouse=True)
@@ -38,7 +64,7 @@ def client(tmp_path, monkeypatch):
 
     with patch("backend.app.main.start_browser", new=AsyncMock(return_value=(MagicMock(), MagicMock()))), \
          patch("backend.app.main.stop_browser", new=AsyncMock(return_value=None)):
-        with TestClient(app) as c:
+        with WorkflowTestClient(app) as c:
             yield c
 
     # Palauta metrics normaalitilaansa
@@ -66,7 +92,7 @@ def session_with_positioning(client, session_with_upload):
     """Sessio jossa positioning on ajettu (mockattu)."""
     from src.schemas import Assessment, MemberProfile
     assessment = Assessment(positioning=sample_positioning(), profile=MemberProfile(), next_question=None)
-    with patch("backend.app.api.positioning.run_kartoittaja", return_value=sample_positioning()), patch("backend.app.api.positioning.run_clarification", return_value=assessment):
+    with patch("backend.app.api.positioning.run_initial_assessment", return_value=assessment):
         response = client.post(
             "/api/positioning",
             json={"revision": 0},

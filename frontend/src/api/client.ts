@@ -1,3 +1,4 @@
+import { operationScope, setOperationMessage } from "./operationProgress";
 import type {
   UploadResponse,
   PositioningDocument,
@@ -10,6 +11,7 @@ import type {
   WorkflowState,
   MemberProfile,
   AnswerDisposition,
+  ModelOperation,
 } from "../types/api";
 
 class ApiError extends Error {
@@ -66,32 +68,65 @@ async function _request<T>(
   return await response.json();
 }
 
-// A browser/proxy may drop a long model request while the server keeps working.
-// Recover the committed revision with read-only requests; never repeat the POST.
-async function positioningModelRequest(
-  sessionId: string,
-  revision: number,
-  path: string,
-  payload: object,
-): Promise<WorkflowState> {
-  try {
-    return await _request<WorkflowState>(path, {
-      method: "POST", sessionId, headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-  } catch (error) {
-    if (!(error instanceof TypeError) && !(error instanceof ApiError && error.status === 504)) throw error;
-    for (let attempt = 0; attempt < 120; attempt++) {
-      try {
-        const state = await _request<WorkflowState>("/api/positioning", { sessionId });
-        if (state.revision > revision) return state;
-      } catch (pollError) {
-        if (!(pollError instanceof TypeError) && !(pollError instanceof ApiError && pollError.status >= 500)) throw pollError;
-      }
-      await new Promise(resolve => setTimeout(resolve, 2500));
-    }
-    throw new ApiError(504, "Yhteys kartoitukseen katkesi eikä tulosta vielä saatu. Älä päivitä sivua. Voit yrittää hetken kuluttua uudelleen.");
+interface PendingOperation { key: string; id?: string; promise?: Promise<unknown> }
+const pendingOperations = new Map<string, PendingOperation>();
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const transient = (error: unknown) => error instanceof TypeError ||
+  (error instanceof DOMException && (error.name === "AbortError" || error.name === "TimeoutError")) ||
+  (error instanceof ApiError && [408, 429, 502, 503, 504].includes(error.status));
+
+function modelRequest<T>(sessionId: string, path: string, payload: object): Promise<T> {
+  const fingerprint = JSON.stringify([sessionId, path, payload]);
+  let entry = pendingOperations.get(fingerprint);
+  if (entry?.promise) return entry.promise as Promise<T>;
+  if (!entry) {
+    if (pendingOperations.size >= 128) return Promise.reject(new ApiError(429, "Liian monta keskeneräistä työtä. Jatka aiempaa työtä ennen uuden aloittamista."));
+    entry = { key: crypto.randomUUID() };
+    pendingOperations.set(fingerprint, entry);
   }
+  const pending = entry;
+  const scope = operationScope(sessionId, path);
+  const request = async (url: string, init: RequestInit = {}) => {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await _request<ModelOperation<T>>(url, { ...init, sessionId, signal: AbortSignal.timeout(10000) });
+      } catch (error) {
+        if (!transient(error) || attempt >= 2) throw error;
+        setOperationMessage(scope, "Yhteys katkesi. Yhdistetään samaan työhön uudelleen…");
+        await delay(2000);
+      }
+    }
+  };
+  const execute = async (): Promise<T> => {
+    try {
+      setOperationMessage(scope, pending.id ? "Haetaan aiemmin käynnistetyn työn tilaa…" : "Käynnistetään työ…");
+      let operation = pending.id
+        ? await request(`/api/operations/${pending.id}`)
+        : await request(path, { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": pending.key }, body: JSON.stringify(payload) });
+      pending.id = operation.id;
+      while (operation.status === "running") {
+        setOperationMessage(scope, "Työ on käynnissä. Voit odottaa tässä; tulos haetaan automaattisesti.");
+        await delay(1500);
+        operation = await request(`/api/operations/${pending.id}`);
+      }
+      // A definite terminal result permits a genuinely new run next time.
+      pendingOperations.delete(fingerprint);
+      if (operation.status === "failed") throw new ApiError(operation.error?.status ?? 500, operation.error?.detail ?? "Työ epäonnistui. Voit yrittää uudelleen.");
+      if (operation.status !== "succeeded" || operation.result == null) throw new ApiError(502, "Palvelimen työn vastaus oli virheellinen.");
+      return operation.result;
+    } catch (error) {
+      if (transient(error) && pendingOperations.has(fingerprint)) {
+        throw new ApiError(0, "Yhteys työn seurantaan katkesi. Yritä uudelleen jatkaaksesi saman työn seurantaa. Älä päivitä sivua.");
+      }
+      pendingOperations.delete(fingerprint);
+      throw error;
+    } finally {
+      pending.promise = undefined;
+      setOperationMessage(scope, "");
+    }
+  };
+  pending.promise = execute();
+  return pending.promise as Promise<T>;
 }
 
 export const api = {
@@ -111,7 +146,7 @@ export const api = {
     _request<WorkflowState>("/api/positioning", { sessionId }),
 
   runPositioning: (sessionId: string, revision: number) =>
-    positioningModelRequest(sessionId, revision, "/api/positioning", { revision }),
+    modelRequest<WorkflowState>(sessionId, "/api/positioning", { revision }),
 
   updatePositioning: (sessionId: string, revision: number, doc: PositioningDocument, profile: MemberProfile) =>
     _request<WorkflowState>("/api/positioning", {
@@ -122,7 +157,7 @@ export const api = {
     }),
 
   answerPositioning: (sessionId: string, revision: number, question_id: string, text: string, disposition: AnswerDisposition) =>
-    positioningModelRequest(sessionId, revision, "/api/positioning/answers", { revision, question_id, text, disposition }),
+    modelRequest<WorkflowState>(sessionId, "/api/positioning/answers", { revision, question_id, text, disposition }),
   finishPositioning: (sessionId: string, revision: number) =>
     _request<WorkflowState>("/api/positioning/finish", {
       method: "POST", sessionId, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ revision }),
@@ -137,24 +172,14 @@ export const api = {
     type: WriterType,
     revision: number
   ) =>
-    _request<T>(`/api/writers/${type}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ revision }),
-      sessionId,
-    }),
+    modelRequest<T>(sessionId, `/api/writers/${type}`, { revision }),
 
   iterateWriter: <T = LinkedInOutput | CVDocument | InteringOutput>(
     sessionId: string,
     type: WriterType,
     payload: IteratePayload
   ) =>
-    _request<T>(`/api/writers/${type}/iterate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      sessionId,
-    }),
+    modelRequest<T>(sessionId, `/api/writers/${type}/iterate`, payload),
 
   downloadCvPdf: (sessionId: string) =>
     _request<Blob>("/api/cv/pdf", { method: "GET", sessionId }),

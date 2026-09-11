@@ -2,18 +2,18 @@ from unittest.mock import patch
 
 import pytest
 
-from src.schemas import Assessment, MemberProfile, QuestionProposal
+from src.schemas import Assessment, AssessmentUpdate, MemberProfile, QuestionProposal
 from tests._fixtures import sample_positioning
 
 
 def assessment(topic=None, profile=None):
-    return Assessment(positioning=sample_positioning(), profile=profile or MemberProfile(),
+    return AssessmentUpdate(profile_updates=(profile or MemberProfile()).model_dump(),
                       next_question=QuestionProposal(topic=topic, text="Miten toimit?") if topic else None)
 
 
 def start(client, sid, topic="voice"):
-    with patch("backend.app.api.positioning.run_kartoittaja", return_value=sample_positioning()), \
-         patch("backend.app.api.positioning.run_clarification", return_value=assessment(topic)):
+    with patch("backend.app.api.positioning.run_initial_assessment", return_value=Assessment(
+            positioning=sample_positioning(), profile=MemberProfile(), next_question=assessment(topic).next_question)):
         response = client.post("/api/positioning", json={"revision": 0}, headers={"X-Session-ID": sid})
     assert response.status_code == 200
     return response.json()

@@ -29,10 +29,31 @@ FastAPI OpenAPI-sopimus on käynnissä olevan palvelimen `/docs`- ja `/openapi.j
 
 ### Kartoitus-API
 
+Mallia käyttävät POST-reitit (alkuanalyysi, `/answers`, kirjoittajat ja `/iterate`)
+vaativat `Idempotency-Key`-otsakkeen (8–128 merkkiä, esimerkiksi UUID). Ne palauttavat
+heti HTTP 202 -vastauksen `{id, status, kind, revision, result, error}`. Hae samaa
+operaatiota `GET /api/operations/{id}`-pyynnöillä ja samalla `X-Session-ID`:llä.
+`status` on `running`, `succeeded` tai `failed`; valmistuneen ajon `result` sisältää
+WorkflowState-olion tai kirjoittajan tuotoksen. Virheen `error` sisältää `status`- ja
+`detail`-kentät. HTTP 202 voi sisältää jo valmistuneen työn, kun sama avain toistetaan.
+
+Yhteyskatkon jälkeen toista käynnistys **samalla avaimella ja sisällöllä**, tai hae
+jo saatua operaatiotunnistetta. Älä luo uutta avainta pelkän verkkovirheen vuoksi.
+Varmasti epäonnistuneen ajon voi käynnistää uudella avaimella. Sama keskeneräinen
+sisältö yhdistetään samaan ajoon myös eri avaimella; eri pyyntö samalle kirjoittajalle
+saa 409-vastauksen ja `X-Active-Operation-ID`-otsakkeen. Eri kirjoittajat voivat ajaa
+rinnakkain. Tietojen aito muuttuminen kesken ajon estää vanhan tuloksen tallennuksen.
+
+Operaatiot ja tulokset ovat vain palvelinprosessin muistissa. Valmistuneiden töiden
+säilytys on enintään tunti ja rajattu määrä; 404 tarkoittaa, ettei operaatiota enää
+ole saatavilla. Sivun päivityksen tai palvelimen uudelleenkäynnistyksen yli ei ole
+jatkamista. Finish, hyväksyntä ja käsin muokkaus palauttavat edelleen suoraan tilan.
+
 | Reitti | Sisältö |
 |---|---|
+| `GET /api/operations/{id}` | Pitkän ajon tila, tulos tai turvallinen virhe |
 | `GET /api/positioning` | Nykyinen WorkflowState |
-| `POST /api/positioning` | `{revision}` käynnistää alkuanalyysin ja täydentävän kartoituksen |
+| `POST /api/positioning` | `{revision}` käynnistää yhden alkuanalyysin ja ensimmäisen kysymyksen |
 | `POST /api/positioning/answers` | `{revision, question_id, text, disposition}`; disposition on answered, skipped tai confidential |
 | `POST /api/positioning/finish` | `{revision}` siirtyy tarkistukseen |
 | `PATCH /api/positioning` | `{revision, positioning, profile}` muokkaa yhteenvetoa |
@@ -97,3 +118,20 @@ Mallina on projektin nykyinen `claude-opus-4-7`. About-pituus on promptitavoite,
 ## Manuaalinen tuotantojulkaisu
 
 GitHub Actions testaa, rakentaa GHCR-imaget ja julkaisee muuttumattoman imageparin rajatulla SSH-rajapinnalla. Hostin nykyinen Nginx säilyy ja Intering käyttää vain localhost-porttia 8081. Asennus, GitHub-secrets, TLS/basic auth, healthcheckit ja rollback: [deploy/README.md](deploy/README.md).
+
+### Malliajojen kesto ja virheet
+
+Ensikartoitus käyttää yhtä Opus 4.7 -kutsua adaptive/high-päättelyllä. Tarkennus
+palauttaa vain muuttuneet positioinnin osiot ja profiilin kentät. Pois jätetty tai
+null-kenttä säilyttää vanhan arvon; tyhjä lista tyhjentää listan. Muutetun osion/listan
+pitää sisältää myös sen edelleen voimassa olevat tiedot. Käyttäjän vastaukset ja
+suljetut aiheet säilyvät palvelimen hallitsemassa historiassa.
+
+Tekniset mallilokit sisältävät roolin, mallin, keston, päättymissyyn, tokenimäärät ja
+virheluokan; ne eivät sisällä profiileja, prompteja tai mallin vastaustekstiä.
+Tokenrajaan päättyvä vastaus saa yhden uusinnan suuremmalla vastausbudjetilla.
+Muut mallivirheet eivät automaattisesti käynnistä uutta generointia.
+
+Yhden synteettisen vertailun tulos: ensikartoitus 76,55 → 34,95 sekuntia ja tarkennus
+37,06 → 27,84 sekuntia. Sama Opus-malli ja aineisto; alkuvaiheen high-päättely säilyi.
+Tämä ei ole vasteaikalupaus: aineiston koko ja mallipalvelun kuormitus vaikuttavat.

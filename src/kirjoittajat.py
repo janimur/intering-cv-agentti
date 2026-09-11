@@ -4,6 +4,7 @@ from anthropic import Anthropic
 from pydantic import BaseModel
 
 from src.prompts import compose_prompt
+from src.model_calls import validated_call
 from src.schemas import (
     PositioningDocument,
     LinkedInOutput,
@@ -49,7 +50,7 @@ def _run_writer(
 ) -> BaseModel:
     """Yhteinen ajologiikka kaikille kolmelle kirjoittajalle."""
     config = _WRITER_CONFIG[writer_type]
-    client = Anthropic()
+    client = Anthropic(max_retries=0, timeout=280)
     system_prompt = system_prompt or compose_prompt(config["prompt_file"])
     schema_cls: type[BaseModel] = config["schema"]
 
@@ -81,19 +82,8 @@ def _run_writer(
     if config["model"] != "claude-opus-4-7":
         create_kwargs["temperature"] = 0.7
 
-    response = client.messages.create(**create_kwargs)
-
-    if response.stop_reason != "tool_use":
-        raise RuntimeError(
-            f"Kirjoittaja '{writer_type}' ei kutsunut työkalua. "
-            f"stop_reason={response.stop_reason}"
-        )
-
-    tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
-    if not tool_use_blocks:
-        raise RuntimeError(f"Kirjoittajan '{writer_type}' vastauksesta puuttuu tool_use-blokki")
-
-    return schema_cls.model_validate(tool_use_blocks[0].input)
+    return validated_call(client, role=writer_type, schema=schema_cls,
+        tool_name=config["tool_name"], retry_max_tokens=8192, **create_kwargs)
 
 
 def _run_writer_with_history(
@@ -120,7 +110,7 @@ def _run_writer_with_history(
     ja riittää iteraatiokäyttöön.
     """
     config = _WRITER_CONFIG[writer_type]
-    client = Anthropic()
+    client = Anthropic(max_retries=0, timeout=280)
     system_prompt = system_prompt or compose_prompt(config["prompt_file"])
     schema_cls: type[BaseModel] = config["schema"]
 
@@ -164,19 +154,8 @@ def _run_writer_with_history(
     if config["model"] != "claude-opus-4-7":
         create_kwargs["temperature"] = 0.7
 
-    response = client.messages.create(**create_kwargs)
-
-    if response.stop_reason != "tool_use":
-        raise RuntimeError(
-            f"Kirjoittaja '{writer_type}' (iteraatio) ei kutsunut työkalua. "
-            f"stop_reason={response.stop_reason}"
-        )
-
-    tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
-    if not tool_use_blocks:
-        raise RuntimeError(f"Kirjoittajan '{writer_type}' iteraatiovastauksesta puuttuu tool_use-blokki")
-
-    return schema_cls.model_validate(tool_use_blocks[0].input)
+    return validated_call(client, role=f"{writer_type}_iterate", schema=schema_cls,
+        tool_name=config["tool_name"], retry_max_tokens=8192, **create_kwargs)
 
 
 def run_linkedin_writer(
