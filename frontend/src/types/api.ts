@@ -20,6 +20,7 @@ export interface ExperienceEntry {
 }
 
 export interface CVDocument {
+  source_revision?: number;
   header: CVHeader;
   positioning_summary: string;
   key_results: string[];
@@ -49,7 +50,7 @@ export interface Positioning {
 }
 
 export interface Evidence {
-  flagship_story: FlagshipStory;
+  flagship_story: FlagshipStory | null;
   supporting_results: SupportingResult[];
   expertise_areas: string[];
 }
@@ -80,12 +81,14 @@ export interface LinkedInExperience {
 }
 
 export interface LinkedInOutput {
+  source_revision?: number;
   headline: string;
   about: string;
   experience: LinkedInExperience[];
 }
 
 export interface InteringOutput {
+  source_revision?: number;
   hook: string;
   product_cards: string[];
   profile_sections: Record<string, string>;
@@ -100,8 +103,39 @@ export interface UploadResponse {
 }
 
 export interface IteratePayload {
+  revision: number;
   note: string;
   target_field?: string;
+}
+
+export interface MemberProfile {
+  additional_facts: string[];
+  corrections: string[];
+  goals: string[];
+  working_style: string[];
+  voice_examples: string[];
+  exclusions: string[];
+}
+
+export type AnswerDisposition = "answered" | "skipped" | "confidential";
+export interface ClarificationQuestion { id: string; topic: string; text: string }
+export interface ClarificationAnswer {
+  question_id: string;
+  topic: string;
+  question: string;
+  text: string;
+  disposition: AnswerDisposition;
+}
+export interface WorkflowState {
+  status: "uploaded" | "clarifying" | "review" | "approved";
+  revision: number;
+  approved_revision: number | null;
+  positioning: PositioningDocument | null;
+  profile: MemberProfile;
+  current_question: ClarificationQuestion | null;
+  answers: ClarificationAnswer[];
+  output_revisions: Partial<Record<WriterType, number>>;
+  prompt_checksums: Record<string, string>;
 }
 
 export interface PromptItem {

@@ -122,7 +122,7 @@ function Footer() {
           © Intering-yhteisö · CV-agentti
         </p>
         <p className="text-xs text-gray-400">
-          Materiaalit käsitellään muistissa eikä mitään tallenneta pysyvästi.
+          Työskentelyä ei tallenneta. Kopioi tai lataa tulokset ennen sivun sulkemista.
         </p>
       </div>
     </footer>
@@ -131,7 +131,7 @@ function Footer() {
 
 function AppContent() {
   const [step, setStep] = useState<Step>("landing");
-  const [adminMode, setAdminMode] = useState(false);
+  const [adminMode, setAdminMode] = useState(() => Boolean(new URLSearchParams(window.location.search).get("admin") || getAdminToken()));
   const { gdprAccepted } = useSession();
 
   useEffect(() => {
@@ -139,11 +139,8 @@ function AppContent() {
     const token = params.get("admin");
     if (token) {
       setAdminToken(token);
-      setAdminMode(true);
       // Siisti URL — poista admin-parametri jotta token ei nay reloadiin
       window.history.replaceState({}, "", window.location.pathname);
-    } else if (getAdminToken()) {
-      setAdminMode(true);
     }
   }, []);
 
@@ -190,7 +187,7 @@ function AppContent() {
               />
             )}
             {step === "output" && (
-              <OutputPage onRestart={() => setStep("landing")} />
+              <OutputPage onRestart={() => setStep("landing")} onBack={() => setStep("writers")} />
             )}
           </main>
         )}

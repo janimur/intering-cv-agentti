@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode, useEffect } from 'react';
 import { WriterCard } from '../../components/WriterCard';
 import { SessionProvider, useSession } from '../../store/SessionContext';
-import { sampleLinkedIn, sampleCv, sampleIntering } from '../fixtures';
+import { sampleLinkedIn, sampleCv, sampleIntering, sampleWorkflow } from '../fixtures';
 
 vi.mock('../../api/client', () => ({
   api: {
@@ -31,9 +31,10 @@ import { api } from '../../api/client';
 
 // Luodaan wrapper-komponentit kerran moduulitasolla muistivuodon välttämiseksi
 function SessionSetter({ children }: { children: ReactNode }) {
-  const { setSessionId } = useSession();
+  const { setSessionId, setWorkflow } = useSession();
   useEffect(() => {
     setSessionId('test-session');
+    setWorkflow(sampleWorkflow);
   // setSessionId on stabiili referenssi, ei aiheuta uudelleenajoa
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return <>{children}</>;
@@ -52,6 +53,19 @@ beforeEach(() => {
 });
 
 describe('WriterCard — aja-painike', () => {
+  it('ei salli kirjoittamista ilman hyväksyttyä kartoitusta', () => {
+    render(<SessionProvider><WriterCard type="cv" output={null} onOutputChange={vi.fn()} /></SessionProvider>);
+    expect(screen.getByRole('button', { name: 'Aja' })).toBeDisabled();
+    expect(api.runWriter).not.toHaveBeenCalled();
+  });
+
+  it('näyttää vanhan tekstin mutta estää sen iteroinnin ja PDF-latauksen', () => {
+    render(<Wrapper><WriterCard type="cv" output={{ ...sampleCv, source_revision: 1 }} onOutputChange={vi.fn()} /></Wrapper>);
+    expect(screen.getByText(/Tämä teksti perustuu aiempiin tietoihin/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Iteroi' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lataa PDF' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Aja uudelleen' })).toBeEnabled();
+  });
   it('"Aja"-painike näkyy kun outputia ei ole', async () => {
     render(
       <Wrapper>
@@ -78,7 +92,7 @@ describe('WriterCard — aja-painike', () => {
     await user.click(screen.getByText('Aja'));
 
     await waitFor(() => {
-      expect(api.runWriter).toHaveBeenCalledWith('test-session', 'linkedin');
+      expect(api.runWriter).toHaveBeenCalledWith('test-session', 'linkedin', 3);
     });
   });
 

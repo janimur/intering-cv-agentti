@@ -87,7 +87,7 @@ def test_session_mutation_persists():
     store = SessionStore()
     session = store.create("CV")
     positioning = sample_positioning()
-    session.positioning = positioning
+    store.update(session.session_id, 0, lambda s: setattr(s, "positioning", positioning))
     fetched = store.get(session.session_id)
     assert fetched.positioning is not None
     assert fetched.positioning.positioning.primary_angle == "Testaaja"

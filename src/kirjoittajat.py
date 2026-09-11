@@ -3,7 +3,7 @@ from typing import Any, Literal
 from anthropic import Anthropic
 from pydantic import BaseModel
 
-from src.prompts import load_prompt
+from src.prompts import compose_prompt
 from src.schemas import (
     PositioningDocument,
     LinkedInOutput,
@@ -44,17 +44,21 @@ def _run_writer(
     positioning: PositioningDocument,
     cv_text: str,
     linkedin_text: str | None = None,
+    approved_context: str | None = None,
+    system_prompt: str | None = None,
 ) -> BaseModel:
     """Yhteinen ajologiikka kaikille kolmelle kirjoittajalle."""
     config = _WRITER_CONFIG[writer_type]
     client = Anthropic()
-    system_prompt = load_prompt(config["prompt_file"])
+    system_prompt = system_prompt or compose_prompt(config["prompt_file"])
     schema_cls: type[BaseModel] = config["schema"]
 
     sections = [
         "## Positiointidokumentti\n\n" + positioning.model_dump_json(indent=2),
         "## CV-teksti\n\n" + cv_text,
     ]
+    if approved_context:
+        sections.append("## Käyttäjän hyväksymä täydentävä profiili ja vastaukset\n\n" + approved_context)
     if linkedin_text:
         sections.append("## LinkedIn-profiilin teksti (nykyinen)\n\n" + linkedin_text)
     user_content = "\n\n".join(sections)
@@ -82,7 +86,7 @@ def _run_writer(
     if response.stop_reason != "tool_use":
         raise RuntimeError(
             f"Kirjoittaja '{writer_type}' ei kutsunut työkalua. "
-            f"stop_reason={response.stop_reason}, content={response.content}"
+            f"stop_reason={response.stop_reason}"
         )
 
     tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
@@ -99,6 +103,9 @@ def _run_writer_with_history(
     linkedin_text: str | None,
     history: list[tuple[str, str]],  # (user_note, previous_output_json)-pareja
     iteration_note: str,
+    approved_context: str | None = None,
+    current_output: str | None = None,
+    system_prompt: str | None = None,
 ) -> BaseModel:
     """
     Iteroiva versio kirjoittajasta joka rakentaa messages-listan historiasta.
@@ -114,7 +121,7 @@ def _run_writer_with_history(
     """
     config = _WRITER_CONFIG[writer_type]
     client = Anthropic()
-    system_prompt = load_prompt(config["prompt_file"])
+    system_prompt = system_prompt or compose_prompt(config["prompt_file"])
     schema_cls: type[BaseModel] = config["schema"]
 
     # Alkuperäinen user-viesti — sama kuin _run_writer käyttää
@@ -122,19 +129,20 @@ def _run_writer_with_history(
         "## Positiointidokumentti\n\n" + positioning.model_dump_json(indent=2),
         "## CV-teksti\n\n" + cv_text,
     ]
+    if approved_context:
+        sections.append("## Käyttäjän hyväksymä täydentävä profiili ja vastaukset\n\n" + approved_context)
     if linkedin_text:
         sections.append("## LinkedIn-profiilin teksti (nykyinen)\n\n" + linkedin_text)
     initial_user = "\n\n".join(sections)
 
     messages: list[dict[str, Any]] = [{"role": "user", "content": initial_user}]
 
-    # Lisää historia: jokainen pari on edellinen output (assistant) + ohje (user)
+    # Each entry is the user's request followed by the result of that request.
     for prev_note, prev_output_json in history:
-        messages.append({
-            "role": "assistant",
-            "content": f"Tuotin seuraavan version:\n{prev_output_json}",
-        })
         messages.append({"role": "user", "content": f"Iteraatio-ohje: {prev_note}"})
+        messages.append({"role": "assistant", "content": prev_output_json})
+    if current_output and (not history or history[-1][1] != current_output):
+        messages.append({"role": "assistant", "content": current_output})
 
     # Viimeinen iteraatio-ohje
     messages.append({"role": "user", "content": f"Iteraatio-ohje: {iteration_note}"})
@@ -175,21 +183,27 @@ def run_linkedin_writer(
     positioning: PositioningDocument,
     cv_text: str,
     linkedin_text: str | None = None,
+    approved_context: str | None = None,
+    system_prompt: str | None = None,
 ) -> LinkedInOutput:
-    return _run_writer("linkedin", positioning, cv_text, linkedin_text)  # type: ignore[return-value]
+    return _run_writer("linkedin", positioning, cv_text, linkedin_text, approved_context, system_prompt)  # type: ignore[return-value]
 
 
 def run_cv_writer(
     positioning: PositioningDocument,
     cv_text: str,
     linkedin_text: str | None = None,
+    approved_context: str | None = None,
+    system_prompt: str | None = None,
 ) -> CVDocument:
-    return _run_writer("cv", positioning, cv_text, linkedin_text)  # type: ignore[return-value]
+    return _run_writer("cv", positioning, cv_text, linkedin_text, approved_context, system_prompt)  # type: ignore[return-value]
 
 
 def run_intering_writer(
     positioning: PositioningDocument,
     cv_text: str,
     linkedin_text: str | None = None,
+    approved_context: str | None = None,
+    system_prompt: str | None = None,
 ) -> InteringOutput:
-    return _run_writer("intering", positioning, cv_text, linkedin_text)  # type: ignore[return-value]
+    return _run_writer("intering", positioning, cv_text, linkedin_text, approved_context, system_prompt)  # type: ignore[return-value]

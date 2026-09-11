@@ -1,13 +1,14 @@
-import os
+import json
 from anthropic import Anthropic
-from src.prompts import load_prompt
-from src.schemas import PositioningDocument, to_tool_input_schema
+from src.prompts import compose_prompt
+from src.schemas import Assessment, WorkflowState, PositioningDocument, to_tool_input_schema
 
 
 def run_kartoittaja(
     cv_text: str,
     linkedin_text: str | None = None,
     baseline_text: str | None = None,
+    system_prompt: str | None = None,
 ) -> PositioningDocument:
     """
     Ajaa kartoittaja-agentin Claude Opus 4.7:llä adaptive thinking päällä.
@@ -21,7 +22,7 @@ def run_kartoittaja(
     Temperature=1 koska thinking vaatii sen.
     """
     client = Anthropic()
-    system_prompt = load_prompt("kartoittaja_system")
+    system_prompt = system_prompt or compose_prompt("kartoittaja_system")
 
     sections = [f"## CV-teksti\n\n{cv_text}"]
     if linkedin_text:
@@ -51,7 +52,7 @@ def run_kartoittaja(
     if response.stop_reason != "tool_use":
         raise RuntimeError(
             f"Kartoittaja ei kutsunut työkalua. stop_reason={response.stop_reason}, "
-            f"content={response.content}"
+            "Tarkista mallin vastaussopimus."
         )
 
     tool_use_blocks = [b for b in response.content if b.type == "tool_use"]
@@ -60,3 +61,23 @@ def run_kartoittaja(
 
     raw_dict = tool_use_blocks[0].input
     return PositioningDocument.model_validate(raw_dict)
+
+
+def run_clarification(cv_text: str, linkedin_text: str | None, state: WorkflowState,
+                      system_prompt: str | None = None) -> Assessment:
+    """Update the proposed profile and choose at most one unanswered topic."""
+    response = Anthropic().messages.create(
+        model="claude-opus-4-7", max_tokens=8000,
+        system=system_prompt or compose_prompt("kartoittaja_system"),
+        messages=[{"role": "user", "content": json.dumps({
+            "cv": cv_text, "linkedin": linkedin_text,
+            "kartoitus": state.model_dump(),
+        }, ensure_ascii=False)}],
+        tools=[{"name": "save_assessment", "description": "Päivitä kartoitus ja seuraava tarpeellinen kysymys tai null.",
+                "input_schema": to_tool_input_schema(Assessment)}],
+        tool_choice={"type": "tool", "name": "save_assessment"},
+    )
+    blocks = [b for b in response.content if b.type == "tool_use" and b.name == "save_assessment"]
+    if response.stop_reason != "tool_use" or len(blocks) != 1:
+        raise RuntimeError("Kartoituksen vastaus ei vastannut työkalusopimusta")
+    return Assessment.model_validate(blocks[0].input)

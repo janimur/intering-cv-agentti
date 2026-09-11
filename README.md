@@ -1,216 +1,95 @@
 # Intering CV-agentti
 
-Suomalaisen interim-johtajien yhteisön (intering) jäsenille tarkoitettu AI-agentti, joka auttaa kirjoittamaan myyvempiä LinkedIn-profiileja, CV:itä ja intering.fi-profiileja interim-toimeksiantoja varten.
+Itsenäinen selainohjelma interim-johtajan positiointiin sekä CV:n, LinkedIn-tekstien ja intering.fi-profiilin kirjoittamiseen.
 
-Tämä on **vaiheen 1 prototyyppi**: agenttilogiikka ja promptit toimivat komentoriviltä ajettavina ajoskripteinä. Vaihe 2 (FastAPI + React-frontend) tulee tämän jälkeen.
+## Käyttäjän polku
 
-## Arkkitehtuuri
+1. Lataa CV PDF:nä ja halutessasi LinkedIn tekstinä tai PDF:nä.
+2. Kartoittaja analysoi aineiston automaattisesti ja kysyy yhden tarpeellisen tarkennuksen kerrallaan. Se täydentää näyttöjä, toimeksiantotoiveita, rajauksia, henkilön omaa ääntä ja interim-työtapaa.
+3. Vastaa, ohita kysymys tai merkitse aihe luottamukselliseksi. Luottamukselliseksi tai ohitetuksi merkityn kysymyksen vastaustekstiä ei lähetetä mallille eikä säilytetä. Älä syötä salassa pidettäviä tietoja. Kartoituksen voi lopettaa nykyisillä tiedoilla milloin tahansa.
+4. Tarkista ja muokkaa positiointia ja täydentävää profiilia. Hyväksy tiedot ennen kirjoittamista.
+5. Valitse haluamasi kirjoittajat vapaassa järjestyksessä. Iteroi tekstejä palautteella, kopioi tulokset tai lataa CV PDF:nä.
 
-Kaksivaiheinen agentti:
+Kaikki esittelytekstit kirjoitetaan minä-muodossa. Todennetut laadulliset tulokset kelpaavat; rooleja ei pudoteta puuttuvien numerotulosten vuoksi. Puuttuva lippulaiva ja tyhjät näyttölistat ovat sallittuja.
 
-1. **Kartoittaja** (`src/kartoittaja.py`) — analysoi jäsenen materiaalin ja tuottaa strukturoidun positiointidokumentin (`PositioningDocument`)
-2. **Kirjoittajat** (`src/kirjoittajat.py`) — kolme erillistä agenttia jotka käyttävät positiointidokumenttia tekstien tuottamiseen:
-   - LinkedIn-kirjoittaja (Headline, About, Experience)
-   - CV-kirjoittaja (strukturoitu JSON HTML/PDF-renderöintiä varten)
-   - Intering-kirjoittaja (hook, tuotekortit, profiilin osiot)
+Työtä ei tallenneta myöhempää jatkamista varten. Selain pitää istuntotunnuksen ja tulokset vain muistissa; sivun lataaminen uudelleen tai sulkeminen hävittää jatkomahdollisuuden. Palvelimen istunnot ovat muistissa prosessin eliniän (ei automaattista vanhenemista). GDPR-hyväksyntä tallennetaan selaimeen. Käyttäjämateriaaleja tai vastauksia ei kirjoiteta metriikkatietokantaan. Metriikat ja ylläpidon promptimuutokset säilyvät levyllä.
 
-Kaikki strukturoitu output kulkee Anthropic `tool_use`-mekanismin läpi. Output validoidaan Pydanticilla.
+## Arkkitehtuuri ja myöhempi integraatio
 
-## Käynnistys Docker Composella
+- `src/schemas.py`: Pydantic-sopimukset positioinnille, profiilille, kysymyksille ja kirjoittajille.
+- `src/kartoittaja.py`: alkuanalyysi ja täydentävä kartoituskutsu Anthropic-työkaluilla.
+- `src/kirjoittajat.py`: kirjoittaminen ja palautteen käsittely, myös nykyinen tuotos ensimmäiseen iteraatioon.
+- `backend/app/workflow.py`: frontendistä riippumattomat tilasiirtymät ja hyväksyntä.
+- `backend/app/sessions.py`: atomisesti päivittyvä muistivarasto, snapshot-luvut ja revision tarkistus.
+- `backend/app/api/`: FastAPI-reitit, PDF ja admin.
+- `frontend/`: React + TypeScript + Tailwind; käyttöliittymän voi korvata saman API:n päälle.
+- `prompts/`: ajantasaiset, tiedostoista koostettavat ohjeet.
 
-Ensimmäinen käynnistys (rakentaa kontit):
+FastAPI OpenAPI-sopimus on käynnissä olevan palvelimen `/docs`- ja `/openapi.json`-osoitteissa. Istuntopyynnöt käyttävät `X-Session-ID`-otsaketta (upload palauttaa satunnaisen tunnuksen). Tässä vaiheessa ei ole jäsenkirjautumista eikä pysyvää tallennusta. Aja backend yhdellä worker-prosessilla: prosessien välillä ei ole jaettua istuntovarastoa.
+
+### Kartoitus-API
+
+| Reitti | Sisältö |
+|---|---|
+| `GET /api/positioning` | Nykyinen WorkflowState |
+| `POST /api/positioning` | `{revision}` käynnistää alkuanalyysin ja täydentävän kartoituksen |
+| `POST /api/positioning/answers` | `{revision, question_id, text, disposition}`; disposition on answered, skipped tai confidential |
+| `POST /api/positioning/finish` | `{revision}` siirtyy tarkistukseen |
+| `PATCH /api/positioning` | `{revision, positioning, profile}` muokkaa yhteenvetoa |
+| `POST /api/positioning/approve` | `{revision}` hyväksyy nykyiset tiedot |
+| `POST /api/writers/{linkedin,cv,intering}` | `{revision}` kirjoittaa hyväksytyistä tiedoista |
+| `POST /api/writers/{type}/iterate` | `{revision, note, target_field?}` iteroi nykyistä tuotosta |
+| `GET /api/cv/pdf` | Ajantasainen hyväksytty CV PDF:nä |
+
+Kartoitus palauttaa tilan uploaded → clarifying → review → approved, revisionin, approved_revisionin, positioinnin, profiilin, aktiivisen kysymyksen ja vastaushistorian. Kirjoittajan vastaus on tuotoksen JSON ja `source_revision`. `output_revisions` kertoo aiempien tuotosten lähtöversion. Lähtötietojen muutos peruu hyväksynnän ja vanhentaa tuotokset säilyttäen ne; ne täytyy kirjoittaa uudelleen. Myös iteraatio ja PDF tarkistavat ajantasaisuuden backendissä.
+
+Jokainen mutaatio tarvitsee viimeksi palautetun revisionin. Myös hyväksyntä muuttaa revisionia. Vanha revision tai myöhässä valmistunut mallikutsu palauttaa 409 eikä ylikirjoita uutta tietoa. Virheellinen mallivastaus palauttaa 502 muuttamatta tilaa. Mallille menevät hyväksytty profiili, positiointi, alkuperäisaineisto ja vastatut julkiset tarkennukset. Profiilin korjaukset voittavat vanhat lähdetiedot.
+
+## Käynnistys
+
+Luo `.env`, jossa on `ANTHROPIC_API_KEY` ja haluttaessa `ADMIN_TOKEN`.
+
 ```bash
 docker compose up --build -d
 ```
 
-Avaa selain osoitteeseen http://localhost.
+Avaa http://localhost. Pysäytä `docker compose down`. Frontend- ja Python-koodimuutokset tarvitsevat uuden buildin.
 
-Logien seuranta:
-```bash
-docker compose logs -f backend
-```
-
-Smoke test (palvelut oltava käynnissä):
-```bash
-bash scripts/smoke_test.sh
-```
-
-Pysäytys:
-```bash
-docker compose down
-```
-
-Frontend-koodin muutos vaatii konttien uudelleenrakentamisen:
-```bash
-docker compose up --build -d
-```
-
-Vaatii .env-tiedoston repon juuressa jossa on ANTHROPIC_API_KEY.
-
-## Asennus
-
-Vaatii Python 3.11+ ja [uv](https://docs.astral.sh/uv/).
+Paikallinen kehitys:
 
 ```bash
 uv sync
+uv run playwright install chromium
+uv run uvicorn backend.app.main:app --reload
 ```
 
-Luo `.env`-tiedosto projektin juureen:
+Toisessa terminaalissa `cd frontend`, `npm ci`, `npm run dev`.
 
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
+## Promptien päivittäminen
 
-## Syötteen rakenne
+Kahdeksan Markdown-moduulia:
 
-Tuotantoputki ottaa vastaan:
+- `yhteiset_saannot.md`: faktat, ääni, rajaukset ja yhteinen kirjoitustapa.
+- `kartoituksen_ohje.md`: keskustelun kysymysten valinta ja profiilin täydentäminen.
+- `suomalainen_interim_markkina.md`: ostajatilanteiden tausta.
+- `tyypilliset_interim_positiointikulmat.md`: positioinnin viitekehys.
+- `kartoittaja_system.md`: analyysi ja kenttien sisältö.
+- `kirjoittaja_{linkedin,cv,intering}_system.md`: tuotekohtaiset ohjeet.
 
-| Syöte | Pakollinen? | Lähde |
-|---|---|---|
-| CV-teksti | Pakollinen | PDF-lataus → `src/pdf_reader.py` purkaa tekstiksi |
-| LinkedIn-profiili | Optionaali | Frontend-tekstikenttä (paste) tai LinkedIn-PDF-lataus |
-| Baseline (perustiedot) | Vain testikäyttö | `tests/fixtures/<henkilo>_baseline.md`, kytketään `USE_BASELINE=1` |
+Muokkaa tiedostoa `prompts/`-hakemistossa. Seuraava mallikutsu lukee tiedostot uudelleen: koodimuutosta tai uudelleenkäynnistystä ei tarvita. Docker Compose liittää `./prompts:/app/prompts:ro`; ota tämä mount käyttöön kerran kontti uusimalla. JSON-työkalujen skeemat säilyvät Python-koodissa, eivät promptitiedostoissa.
 
-LinkedIn-input rikastuttaa positiointia merkittävästi (jäsenen oma ääni, painopisteet, "Mitä etsin"). Ristiriitatilanteissa kartoittaja luottaa CV:hen.
+Ylläpidossa (`http://localhost/?admin=<ADMIN_TOKEN>`) voit muokata kaikkia moduuleja. Adminin versio tallentuu `${DATA_DIR}/prompts/`-hakemistoon ja **ohittaa** saman nimisen versionhallintatiedoston. Käyttöliittymä näyttää aktiivisen lähteen. "Palauta oletukseen" poistaa tämän ohituksen. Jos tiedoston päivitys ei näy, tarkista ensin ohitus. `DATA_DIR` on Dockerissa `/data`, paikallisesti `data/`.
 
-## Käyttö (komentorivi)
+Kunkin roolin ohje koostetaan yhteisistä säännöistä, markkinataustasta, positiointikulmista ja rooliohjeesta; kartoittaja saa lisäksi keskusteluohjeen. Käytetyn koosteen SHA-256-tarkiste näkyy istunnon `prompt_checksums`-kentässä. Promptin muutos vaikuttaa seuraaviin ajoihin eikä kirjoita vanhoja tuotoksia automaattisesti uudelleen.
 
-Aja vaiheet järjestyksessä:
+## Testaus
 
-```bash
-# 1. Kartoittaja → tests/output/positioning.json
-uv run python tests/test_kartoittaja.py
-
-# 2. Kolme kirjoittajaa → tests/output/{linkedin,cv,intering}.json
-uv run python tests/test_kirjoittajat.py
-
-# 3. Evaluointi (12 kriteeriä, exit 1 jos joku epäonnistuu)
-uv run python evaluate.py
-```
-
-Tällä hetkellä testihenkilönä on Jani Muuronen. Toinen testihenkilö vaatii uuden CV-PDF:n `tmp/`-hakemistoon ja oman LinkedIn-tekstin `tests/fixtures/jani_linkedin.md`-tiedostoon (tai `tmp/linkedin/*.pdf`).
-
-## Mallivalinnat
-
-| Komponentti | Malli | Konfiguraatio |
-|---|---|---|
-| Kartoittaja | `claude-opus-4-7` | adaptive thinking (`output_config.effort: "high"`), temperature 1.0 |
-| LinkedIn-kirjoittaja | `claude-opus-4-7` | temperature 1.0 (Opus + thinking ei tue muita arvoja) |
-| CV-kirjoittaja | `claude-opus-4-7` | sama |
-| Intering-kirjoittaja | `claude-opus-4-7` | sama |
-
-**Miksi Opus kaikkialla**: aiempi iterointi osoitti että Sonnet 4.5 ei noudattanut tarkkaa "mitattava tulos" -määritelmää CV-pinossa. Opus tiivistää vanhat roolit yhdistelmälauseiksi prompti-ohjeen mukaisesti, Sonnet jätti vajaita rooleja experienceen.
-
-## Repon rakenne
-
-```
-intering/
-├── README.md                # tämä tiedosto
-├── HANDOVER.md              # alkuperäinen toimeksianto Janilta
-├── EVALUATION.md            # self-evaluation, päivittyy iteraatioilla
-├── pyproject.toml           # uv-projekti
-├── .env.example             # ANTHROPIC_API_KEY=
-├── evaluate.py              # 12-kriteerin evaluointiskripti
-├── prompts/                 # koko logiikan ydin
-│   ├── kartoittaja_system.md
-│   ├── kirjoittaja_linkedin_system.md
-│   ├── kirjoittaja_cv_system.md
-│   └── kirjoittaja_intering_system.md
-├── src/
-│   ├── schemas.py           # Pydantic-mallit (PositioningDocument, CVDocument, ...)
-│   ├── pdf_reader.py        # pdfplumber-pohjainen tekstinkaivu
-│   ├── kartoittaja.py       # vaiheen 1 agentti
-│   └── kirjoittajat.py      # vaiheen 2 agentit (yhteinen _run_writer)
-└── tests/
-    ├── _inputs.py           # LinkedIn-syötteen lataus (paste tai PDF)
-    ├── fixtures/            # gitignored testimateriaali
-    ├── output/              # gitignored ajojen tuotokset
-    ├── test_kartoittaja.py  # ajoskripti
-    └── test_kirjoittajat.py # ajoskripti
-```
-
-## Promptien ydinperiaatteet
-
-Yhteiset säännöt kaikille kirjoittajille:
-
-- **Kielletyt sanat**: synergia, stakeholder, leverage, drive, skaalata (konsulttimielessä — operaattori-muodot kuten "skaalasin" sallittuja)
-- **Ei jargonia**: ei "kokenut johtaja", "intohimoinen ammattilainen" tms.
-- **Mitattavat tulokset etusijalla**: numerot, prosentit, eurot, aikamääreet
-- **Operaattori-framing**: aktiivit verbit ("rakensin", "skaalasin"), ei "auttoi/tuki/osallistui"
-- **Suomi**: kaikki output suomeksi, vakiintuneet englanninkieliset termit (P&L, GTM, ICP, CRM, CEO/COO/CCO) säilyvät
-
-## Evaluointi
-
-`evaluate.py` tarkistaa 12 kriteeriä:
-
-1. Kartoittaja-JSON validi
-2. Kaikki kentät täytetty
-3. Flagship story sisältää numeron
-4. LinkedIn-headline ≤ 220 merkkiä
-5. LinkedIn-about 1500–2000 merkkiä (tavoite, ei ehdoton)
-6. LinkedIn ei sisällä kiellettyjä sanoja
-7. CV-JSON validi
-8. CV: jokaisella experience-roolilla ≥ 2 mitattavaa tulosta
-9. CV ei sisällä kiellettyjä sanoja
-10. Intering-hook 4-osaisessa pipe-formaatissa
-11. Intering ei sisällä kiellettyjä sanoja
-12. Ei emoji-merkkejä missään output-tiedostossa
-
-Exit-koodi `0` jos kaikki OK (varoitukset sallitaan), `1` jos vähintään yksi epäonnistuu.
-
-## Testien ajaminen
-
-Backend-yksikkötestit ja API-testit (nopeita, ei tee oikeita LLM-kutsuja):
 ```bash
 uv run pytest tests/unit tests/api
 ```
 
-Frontend-yksikkötestit:
-```bash
-cd frontend && npm test
-```
+`cd frontend` ja `npm test`, `npm run build`. Mockatut testit eivät tee maksullisia mallikutsuja. Selainpolku: `npm run test:e2e` (katso frontend/package.json).
 
-Manuaaliset integraatio-ajot (tekevät oikeita Anthropic-kutsuja, vaatii ANTHROPIC_API_KEY):
-```bash
-uv run python tests/test_kartoittaja.py
-uv run python tests/test_kirjoittajat.py
-uv run python evaluate.py
-```
+Manuaalinen laaduntarkistus: [TESTING.md](TESTING.md). `tests/test_kartoittaja.py` ja `tests/test_kirjoittajat.py` ovat erillisiä **maksullisia** CLI-ajoskriptejä, eivät sovelluksen hyväksyntäpolku. `uv run python evaluate.py` tarkistaa niiden tiedostotuotosten rakennetta. Numeron puuttuminen tai tulosten pieni määrä ei ole virhe; lähdeuskollisuus ja oma ääni vaativat myös ihmisen arvion.
 
-### Pre-commit hook
-
-Repossa on git-hook (`.githooks/pre-commit`) joka ajaa kaikki yksikkö- ja API-testit automaattisesti ennen jokaista committia. Kytke se päälle kerran kloonauksen jälkeen:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-Jos joudut ohittamaan hookin poikkeustilanteessa, käytä `git commit --no-verify`.
-
-## Admin-toiminnot
-
-Promptit ovat muokattavissa selaimessa ilman koodimuutoksia. Aseta `.env`-
-tiedostoon `ADMIN_TOKEN=<jokin-pitkä-satunnainen-merkkijono>` ja käynnistä
-palvelu uudelleen. Avaa sitten selaimessa:
-
-http://localhost/?admin=<jokin-pitkä-satunnainen-merkkijono>
-
-Muokatut promptit tallentuvat `data/prompts/`-volumeen ja tulevat voimaan
-välittömästi. "Palauta oletukseen" -painike poistaa overlay-tiedoston ja
-seuraava lataus käyttää `prompts/`-hakemiston (git-versioitua) sisältöä.
-
-## Tunnetut rajoitukset
-
-- **About-pituus**: prompti ohjaa "alle 2000 merkkiä", mutta Opus 4.7 ylittää rajan ajoittain (ks. EVALUATION.md). Schema-tason `max_length` voisi pakottaa retryyn — ei toteutettu tässä vaiheessa.
-- **Yksi testihenkilö**: kaikki iteroinnit on tehty Janin profiililla, jolla on poikkeuksellisen kvantifioitu lippulaivasaavutus (€2.5M → €25M). Toinen testihenkilö heikommilla numeroilla on pääriski.
-- **Ei frontendia eikä backendia**: vaiheen 1 prototyyppi on komentoriviltä ajettava. Tuotantoversio (FastAPI + React) tulee vaiheessa 2.
-
-## Vaiheen 2 muistilappu
-
-Frontend-vaatimukset jotka tämän vaiheen koodi olettaa:
-
-- CV-PDF-lataus
-- LinkedIn-input: tekstikenttä (paste) **tai** LinkedIn-PDF-lataus (mahdollisesti molemmat)
-- Magic link -kirjautuminen, sallitut jäsenet Google Sheetsissä
-- Sessio muistissa, ei tallennusta levylle
-- CV-JSON renderöidään PDF:ksi (HTML-template + Playwright)
+Mallina on projektin nykyinen `claude-opus-4-7`. About-pituus on promptitavoite, ei tiukka skeemaraja. Oikeilla käyttäjämateriaaleilla tehtävä laadunvarmistus tarvitaan promptimuutosten jälkeen.

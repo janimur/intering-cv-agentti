@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode, useEffect } from 'react';
 import { IterateModal } from '../../components/IterateModal';
 import { SessionProvider, useSession } from '../../store/SessionContext';
-import { sampleLinkedIn } from '../fixtures';
+import { sampleLinkedIn, sampleWorkflow } from '../fixtures';
 
 vi.mock('../../api/client', () => ({
   api: {
@@ -30,10 +30,11 @@ vi.mock('../../api/client', () => ({
 import { api } from '../../api/client';
 
 function SessionSetterForIterate({ children }: { children: ReactNode }) {
-  const { setSessionId } = useSession();
+  const { setSessionId, setWorkflow } = useSession();
   useEffect(() => {
     setSessionId('test-session-id');
-  }, [setSessionId]);
+    setWorkflow(sampleWorkflow);
+  }, [setSessionId, setWorkflow]);
   return <>{children}</>;
 }
 
@@ -103,7 +104,7 @@ describe('IterateModal', () => {
       expect(api.iterateWriter).toHaveBeenCalledWith(
         'test-session-id',
         'linkedin',
-        { note: 'Tee paremmaksi' }
+        { revision: 3, note: 'Tee paremmaksi' }
       );
     });
   });

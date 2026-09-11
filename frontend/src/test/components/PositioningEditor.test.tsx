@@ -1,11 +1,27 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PositioningEditor } from '../../components/PositioningEditor';
 import { samplePositioning } from '../fixtures';
 import type { PositioningDocument } from '../../types/api';
 
 describe('PositioningEditor', () => {
+  it('näyttää ja muokkaa myös tukevat näytöt ja osaamisalueet', () => {
+    const onChange = vi.fn();
+    const doc = { ...samplePositioning, evidence: { ...samplePositioning.evidence, supporting_results: [{ metric: 'Toimitusvarmuus', value: 'Parani', context: 'Johdin muutosta' }] } };
+    render(<PositioningEditor positioning={doc} onChange={onChange} />);
+    fireEvent.change(screen.getByLabelText('Tilanne ja oma osuus'), { target: { value: 'Osallistuin muutokseen' } });
+    expect(onChange.mock.lastCall?.[0].evidence.supporting_results[0].context).toBe('Osallistuin muutokseen');
+    fireEvent.change(screen.getByLabelText('Osaamisalueet 1'), { target: { value: 'Operatiivinen johtaminen' } });
+    expect(onChange.mock.lastCall?.[0].evidence.expertise_areas).toEqual(['Operatiivinen johtaminen']);
+  });
+
+  it('ei salli yli viittä todistuspistettä', () => {
+    const doc = { ...samplePositioning, key_messages: { ...samplePositioning.key_messages, proof_points: ['1', '2', '3', '4', '5'] } };
+    render(<PositioningEditor positioning={doc} onChange={vi.fn()} />);
+    const group = screen.getByRole('group', { name: 'Todistuspisteet (proof points)' });
+    expect(within(group).getByRole('button', { name: '+ Lisää' })).toBeDisabled();
+  });
   it('renderöi primary_angle-kentän', () => {
     render(<PositioningEditor positioning={samplePositioning} onChange={vi.fn()} />);
     expect(screen.getByDisplayValue('Testaaja')).toBeInTheDocument();

@@ -96,3 +96,21 @@ def test_reset_prompt_raises_for_unknown_name(prompts_module):
     """reset_prompt nostaa ValueError tuntemattomalle nimelle."""
     with pytest.raises(ValueError, match="Tuntematon prompti"):
         prompts_module.reset_prompt("virheellinen_nimi")
+
+
+def test_composition_reloads_shared_default_and_overlay(prompts_module, tmp_path, monkeypatch):
+    default_dir = tmp_path / "defaults"
+    default_dir.mkdir()
+    for name in prompts_module.PROMPT_NAMES:
+        (default_dir / f"{name}.md").write_text(name)
+    monkeypatch.setattr(prompts_module, "DEFAULT_PROMPTS_DIR", default_dir)
+    before = prompts_module.compose_prompt("kirjoittaja_cv_system")
+    (default_dir / "yhteiset_saannot.md").write_text("New shared rule")
+    after = prompts_module.compose_prompt("kirjoittaja_cv_system")
+    assert "New shared rule" in after
+    assert prompts_module.prompt_checksum(before) != prompts_module.prompt_checksum(after)
+    prompts_module.save_prompt("yhteiset_saannot", "Overlay shared rule")
+    assert "Overlay shared rule" in prompts_module.compose_prompt("kirjoittaja_linkedin_system")
+    assert "Overlay shared rule" in prompts_module.compose_prompt("kirjoittaja_intering_system")
+    prompts_module.reset_prompt("yhteiset_saannot")
+    assert "New shared rule" in prompts_module.compose_prompt("kartoittaja_system")

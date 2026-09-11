@@ -5,7 +5,6 @@ import {
   useEffect,
   useCallback,
   useMemo,
-  useRef,
   type ReactNode,
 } from "react";
 import type {
@@ -14,11 +13,13 @@ import type {
   CVDocument,
   InteringOutput,
   WriterType,
+  WorkflowState,
 } from "../types/api";
 
 type LoadingKey = "positioning" | WriterType | "pdf" | "upload";
 
 interface SessionState {
+  workflow: WorkflowState | null;
   sessionId: string | null;
   positioning: PositioningDocument | null;
   linkedinOutput: LinkedInOutput | null;
@@ -32,6 +33,7 @@ interface SessionState {
 }
 
 interface SessionContextValue extends SessionState {
+  setWorkflow: (workflow: WorkflowState) => void;
   setSessionId: (id: string | null) => void;
   setPositioning: (doc: PositioningDocument | null) => void;
   setLinkedinOutput: (out: LinkedInOutput | null) => void;
@@ -53,6 +55,7 @@ interface SessionContextValue extends SessionState {
 const GDPR_KEY = "intering_gdpr_accepted";
 
 const initialState: SessionState = {
+  workflow: null,
   sessionId: null,
   positioning: null,
   linkedinOutput: null,
@@ -86,16 +89,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   }, [state.gdprAccepted]);
 
-  // Pidetään tuoreimman state:n referenssi ref:issä jotta resetSession voi
-  // lukea gdprAccepted:n ilman että callback on luotava uudelleen joka
-  // state-muutoksella. Tämä on tärkeä — ilman tätä setter-funktiot
-  // luotaisiin uudelleen joka renderillä, mikä rikkoisi useEffect-hookit
-  // joissa setter on dependency-listassa (ääretön re-render).
-  const stateRef = useRef(state);
-  stateRef.current = state;
-
   const setSessionId = useCallback(
-    (id: string | null) => setState((s) => ({ ...s, sessionId: id })),
+    (id: string | null) => setState((s) => ({ ...initialState, gdprAccepted: s.gdprAccepted, sessionId: id })),
+    []
+  );
+  const setWorkflow = useCallback(
+    (workflow: WorkflowState) => setState((s) => ({ ...s, workflow, positioning: workflow.positioning })),
     []
   );
   const setPositioning = useCallback(
@@ -144,12 +143,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     []
   );
   const resetSession = useCallback(() => {
-    setState({ ...initialState, gdprAccepted: stateRef.current.gdprAccepted });
+    setState((s) => ({ ...initialState, gdprAccepted: s.gdprAccepted }));
   }, []);
 
   const value = useMemo<SessionContextValue>(
     () => ({
       ...state,
+      setWorkflow,
       setSessionId,
       setPositioning,
       setLinkedinOutput,
@@ -164,6 +164,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }),
     [
       state,
+      setWorkflow,
       setSessionId,
       setPositioning,
       setLinkedinOutput,
@@ -183,6 +184,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Context and its hook intentionally share this module.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useSession() {
   const ctx = useContext(SessionContext);
   if (!ctx) throw new Error("useSession must be used within SessionProvider");

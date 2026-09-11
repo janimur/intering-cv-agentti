@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { SessionProvider, useSession } from '../store/SessionContext';
-import { samplePositioning } from './fixtures';
+import { samplePositioning, sampleWorkflow, sampleCv } from './fixtures';
 
 function wrapper({ children }: { children: ReactNode }) {
   return <SessionProvider>{children}</SessionProvider>;
@@ -11,6 +11,23 @@ function wrapper({ children }: { children: ReactNode }) {
 
 
 describe('SessionProvider', () => {
+  it('uusi lataus nollaa edellisen kartoituksen ja tuotokset', () => {
+    const { result } = renderHook(() => useSession(), { wrapper });
+    act(() => { result.current.setSessionId('old'); result.current.setWorkflow(sampleWorkflow); result.current.setCvOutput(sampleCv); });
+    act(() => { result.current.setSessionId('new'); });
+    expect(result.current.workflow).toBeNull();
+    expect(result.current.positioning).toBeNull();
+    expect(result.current.cvOutput).toBeNull();
+  });
+
+  it('uusi selainistunto ei palauta aiempaa kartoitusta', () => {
+    const first = renderHook(() => useSession(), { wrapper });
+    act(() => { first.result.current.setSessionId('old'); first.result.current.setWorkflow(sampleWorkflow); });
+    first.unmount();
+    const next = renderHook(() => useSession(), { wrapper });
+    expect(next.result.current.sessionId).toBeNull();
+    expect(next.result.current.workflow).toBeNull();
+  });
   it('renderöi childrenit', () => {
     const { result } = renderHook(() => useSession(), { wrapper });
     expect(result.current).toBeDefined();

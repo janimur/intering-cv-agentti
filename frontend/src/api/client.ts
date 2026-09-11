@@ -7,6 +7,9 @@ import type {
   WriterType,
   IteratePayload,
   PromptItem,
+  WorkflowState,
+  MemberProfile,
+  AnswerDisposition,
 } from "../types/api";
 
 class ApiError extends Error {
@@ -50,7 +53,7 @@ async function _request<T>(
     let detail = response.statusText;
     try {
       const data = await response.json();
-      detail = data.detail || detail;
+      detail = typeof data.detail === "string" ? data.detail : "Tarkista syötetyt tiedot ja yritä uudelleen.";
     } catch {
       // ignore parse error, use statusText
     }
@@ -76,26 +79,48 @@ export const api = {
     return _request("/api/upload", { method: "POST", body: fd });
   },
 
-  runPositioning: (sessionId: string) =>
-    _request<PositioningDocument>("/api/positioning", {
+  getPositioning: (sessionId: string) =>
+    _request<WorkflowState>("/api/positioning", { sessionId }),
+
+  runPositioning: (sessionId: string, revision: number) =>
+    _request<WorkflowState>("/api/positioning", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ revision }),
       sessionId,
     }),
 
-  updatePositioning: (sessionId: string, doc: PositioningDocument) =>
-    _request<PositioningDocument>("/api/positioning", {
+  updatePositioning: (sessionId: string, revision: number, doc: PositioningDocument, profile: MemberProfile) =>
+    _request<WorkflowState>("/api/positioning", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(doc),
+      body: JSON.stringify({ revision, positioning: doc, profile }),
       sessionId,
+    }),
+
+  answerPositioning: (sessionId: string, revision: number, question_id: string, text: string, disposition: AnswerDisposition) =>
+    _request<WorkflowState>("/api/positioning/answers", {
+      method: "POST", sessionId, headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ revision, question_id, text, disposition }),
+    }),
+  finishPositioning: (sessionId: string, revision: number) =>
+    _request<WorkflowState>("/api/positioning/finish", {
+      method: "POST", sessionId, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ revision }),
+    }),
+  approvePositioning: (sessionId: string, revision: number) =>
+    _request<WorkflowState>("/api/positioning/approve", {
+      method: "POST", sessionId, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ revision }),
     }),
 
   runWriter: <T = LinkedInOutput | CVDocument | InteringOutput>(
     sessionId: string,
-    type: WriterType
+    type: WriterType,
+    revision: number
   ) =>
     _request<T>(`/api/writers/${type}`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ revision }),
       sessionId,
     }),
 

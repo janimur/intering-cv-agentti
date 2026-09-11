@@ -74,35 +74,12 @@ def main() -> int:
         failures += 1
         return 1  # Ilman positioningia ei voi jatkaa
 
-    # 2. Kaikki kentät täytetty
-    pos_dict = pos.model_dump()
-    empty_fields: list[str] = []
-
-    def check_filled(obj, prefix=""):
-        if isinstance(obj, dict):
-            for k, v in obj.items():
-                check_filled(v, f"{prefix}{k}.")
-        elif isinstance(obj, list):
-            if len(obj) == 0:
-                empty_fields.append(prefix.rstrip("."))
-            for i, item in enumerate(obj):
-                check_filled(item, f"{prefix}[{i}].")
-        elif obj is None or obj == "":
-            empty_fields.append(prefix.rstrip("."))
-
-    check_filled(pos_dict)
-    if empty_fields:
-        print(f"  [{FAIL}] Tyhjiä kenttiä: {empty_fields}")
-        failures += 1
+    # Missing evidence is valid. Source fidelity needs human review.
+    if pos.evidence.flagship_story is None:
+        print(f"  [{PASS}] Ei lippulaivatarinaa — sallittu niukalla aineistolla")
     else:
-        print(f"  [{PASS}] Kaikki kentät täytetty")
-
-    # 3. flagship_story sisältää numeron
-    if re.search(r"\d", pos.evidence.flagship_story.result_quantified):
-        print(f"  [{PASS}] Flagship story sisältää mitattavan tuloksen")
-    else:
-        print(f"  [{FAIL}] Flagship story ei sisällä numeroa")
-        failures += 1
+        print(f"  [{WARN}] Tarkista lippulaivatarinan faktat lähteistä; myös laadullinen näyttö sallitaan")
+        warnings += 1
 
     # --- LinkedIn ---
     print("\nLinkedIn")
@@ -156,15 +133,9 @@ def main() -> int:
         cv_raw = None
 
     if cv and cv_raw:
-        # 8. jokaisella roolilla >=2 results
-        bad_roles = [
-            f"{e.role} @ {e.company}" for e in cv.experience if len(e.results) < 2
-        ]
-        if not bad_roles:
-            print(f"  [{PASS}] Kaikilla rooleilla väh. 2 mitattavaa tulosta")
-        else:
-            print(f"  [{FAIL}] Roolit alle 2 tuloksella: {bad_roles}")
-            failures += 1
+        print(f"  [{PASS}] Roolit sallitaan ilman tulosten vähimmäismäärää")
+        print(f"  [{WARN}] Tarkista minä-muoto sekä vastuun ja saavutusten oikeellisuus lähteistä")
+        warnings += 1
 
         # 9. ei kiellettyjä sanoja
         all_text = "\n".join(all_strings_in_dict(cv_raw))

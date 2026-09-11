@@ -5,6 +5,7 @@ import type { LinkedInOutput, CVDocument, InteringOutput } from "../types/api";
 
 interface OutputPageProps {
   onRestart: () => void;
+  onBack?: () => void;
 }
 
 function LinkedInSection({ output }: { output: LinkedInOutput }) {
@@ -37,13 +38,15 @@ function CvSection({
   output,
   sessionId,
   onPdfError,
+  stale,
 }: {
   output: CVDocument;
   sessionId: string | null;
   onPdfError: (msg: string) => void;
+  stale: boolean;
 }) {
   const handleDownload = async () => {
-    if (!sessionId) return;
+    if (!sessionId || stale) return;
     try {
       const blob = await api.downloadCvPdf(sessionId);
       const url = URL.createObjectURL(blob);
@@ -63,7 +66,7 @@ function CvSection({
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2>CV</h2>
-        <button onClick={handleDownload} className="btn-primary">
+        <button onClick={handleDownload} disabled={stale} className="btn-primary">
           Lataa PDF
         </button>
       </div>
@@ -148,8 +151,8 @@ function InteringSection({ output }: { output: InteringOutput }) {
   );
 }
 
-export function OutputPage({ onRestart }: OutputPageProps) {
-  const { linkedinOutput, cvOutput, interingOutput, sessionId, resetSession, setError, errors } =
+export function OutputPage({ onRestart, onBack }: OutputPageProps) {
+  const { linkedinOutput, cvOutput, interingOutput, workflow, sessionId, resetSession, setError, errors } =
     useSession();
 
   const handleRestart = () => {
@@ -158,6 +161,8 @@ export function OutputPage({ onRestart }: OutputPageProps) {
   };
 
   const pdfError = errors.pdf;
+  const stale = (output: LinkedInOutput | CVDocument | InteringOutput) => workflow?.status !== "approved" || output.source_revision !== workflow.revision;
+  const staleNotice = <p className="text-sm text-amber-700 mb-3">Teksti perustuu aiempiin tietoihin. Päivitä se kirjoittajissa ennen käyttöä.</p>;
 
   return (
     <div>
@@ -187,20 +192,25 @@ export function OutputPage({ onRestart }: OutputPageProps) {
       )}
 
       <div className="space-y-8">
-        {linkedinOutput && <LinkedInSection output={linkedinOutput} />}
+        {linkedinOutput && <section>{stale(linkedinOutput) && staleNotice}<LinkedInSection output={linkedinOutput} /></section>}
 
         {cvOutput && (
+          <section>
+          {stale(cvOutput) && staleNotice}
           <CvSection
             output={cvOutput}
             sessionId={sessionId}
             onPdfError={(msg) => setError("pdf", msg)}
+            stale={stale(cvOutput)}
           />
+          </section>
         )}
 
-        {interingOutput && <InteringSection output={interingOutput} />}
+        {interingOutput && <section>{stale(interingOutput) && staleNotice}<InteringSection output={interingOutput} /></section>}
       </div>
 
       <div className="mt-12 pt-6 border-t border-gray-200">
+        {onBack && <button onClick={onBack} className="btn-secondary mr-3">Takaisin kirjoittajiin</button>}
         <button onClick={handleRestart} className="btn-secondary">
           Aloita alusta
         </button>

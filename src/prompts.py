@@ -10,6 +10,7 @@ Tämä mahdollistaa adminin tekemät prompti-muutokset ilman koodimuutoksia
 ja ilman gitin koskemista.
 """
 import os
+import hashlib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -23,6 +24,10 @@ def _overlay_dir() -> Path:
 
 # Kaikkien tunnettujen promptien nimet (ilman .md-päätettä)
 PROMPT_NAMES = [
+    "yhteiset_saannot",
+    "kartoituksen_ohje",
+    "suomalainen_interim_markkina",
+    "tyypilliset_interim_positiointikulmat",
     "kartoittaja_system",
     "kirjoittaja_linkedin_system",
     "kirjoittaja_cv_system",
@@ -67,3 +72,15 @@ def reset_prompt(name: str) -> None:
 def has_overlay(name: str) -> bool:
     """Onko admin muokannut taman promptin?"""
     return (_overlay_dir() / f"{name}.md").exists()
+
+
+def compose_prompt(name: str) -> str:
+    """Read every module afresh; shared rules precede role-specific instructions."""
+    modules = ["yhteiset_saannot", "suomalainen_interim_markkina", "tyypilliset_interim_positiointikulmat", name]
+    if name == "kartoittaja_system":
+        modules.append("kartoituksen_ohje")
+    return "\n\n---\n\n".join(load_prompt(module) for module in modules)
+
+
+def prompt_checksum(content: str) -> str:
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()

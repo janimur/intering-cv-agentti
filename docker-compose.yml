@@ -9,6 +9,7 @@ services:
       - DATA_DIR=/data
     volumes:
       - metrics_data:/data
+      - ./prompts:/app/prompts:ro
     networks:
       - internal
     expose:
