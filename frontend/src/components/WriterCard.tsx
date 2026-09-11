@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "./LoadingIndicator";
 import { OperationProgress } from "./OperationProgress";
 import { useState } from "react";
 import type {
@@ -69,7 +70,7 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
   };
 
   const handleDownloadPdf = async () => {
-    if (!sessionId || stale || !approved) return;
+    if (!sessionId || stale || !approved || isLoading.pdf) return;
     setLoading("pdf", true);
     setError("pdf", null);
     try {
@@ -131,6 +132,9 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
         <div className="space-y-4 mt-4 pt-4 border-t border-gray-200">
           <Field label="Otsikko">
             {cv.header.name} — {cv.header.title}
+          </Field>
+          <Field label="Yhteystiedot">
+            {Object.values(cv.header.contact).filter(Boolean).join(" · ")}
           </Field>
           <Field label="Positioning summary">
             {cv.positioning_summary}
@@ -230,7 +234,7 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
 
   return (
     <div className="card">
-      <div className="flex items-baseline justify-between gap-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-4">
         <div>
           <h3>{WRITER_LABELS[type]}</h3>
           <p className="text-sm text-gray-500 mt-1">{WRITER_DESCRIPTIONS[type]}</p>
@@ -243,10 +247,7 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
           )}
 
           {isRunning && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 px-3">
-              <div className="w-4 h-4 border-2 border-intering-100 border-t-intering-500 rounded-full animate-spin" />
-              Ajetaan...
-            </div>
+            <LoadingIndicator label="Kirjoitetaan…" />
           )}
 
           {output && !isRunning && !stale && (
@@ -256,8 +257,8 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
           )}
 
           {type === "cv" && output && !isRunning && !stale && (
-            <button onClick={handleDownloadPdf} className="btn-secondary">
-              Lataa PDF
+            <button onClick={handleDownloadPdf} disabled={isLoading.pdf} className="btn-secondary">
+              {isLoading.pdf ? <LoadingIndicator label="Muodostetaan PDF…" /> : "Lataa PDF"}
             </button>
           )}
         </div>

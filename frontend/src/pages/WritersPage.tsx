@@ -9,10 +9,10 @@ import { WriterCard } from "../components/WriterCard";
 
 interface WritersPageProps {
   onBack: () => void;
-  onContinue: () => void;
+  onRestart: () => void;
 }
 
-export function WritersPage({ onBack, onContinue }: WritersPageProps) {
+export function WritersPage({ onBack, onRestart }: WritersPageProps) {
   const {
     linkedinOutput,
     cvOutput,
@@ -21,10 +21,11 @@ export function WritersPage({ onBack, onContinue }: WritersPageProps) {
     setCvOutput,
     setInteringOutput,
     errors,
+    resetSession,
+    isLoading,
   } = useSession();
 
-  const hasAnyOutput =
-    linkedinOutput !== null || cvOutput !== null || interingOutput !== null;
+  const busy = Object.values(isLoading).some(Boolean);
 
   const handleOutputChange = (
     type: WriterType,
@@ -42,7 +43,7 @@ export function WritersPage({ onBack, onContinue }: WritersPageProps) {
       <h1 className="mb-2">Kirjoittajat</h1>
       <p className="text-gray-600 mb-8">
         Valitse tarvitsemasi tekstit missä järjestyksessä tahansa. Voit tuottaa
-        myös vain yhden materiaalin ja muokata sitä lisäohjeilla.
+        myös vain yhden materiaalin ja muokata sitä lisäohjeilla. Kopioi tekstit tästä näkymästä tai lataa CV PDF:nä.
       </p>
 
       {pdfError && (
@@ -73,11 +74,9 @@ export function WritersPage({ onBack, onContinue }: WritersPageProps) {
         <button onClick={onBack} className="btn-secondary">
           Takaisin
         </button>
-        {hasAnyOutput && (
-          <button onClick={onContinue} className="btn-primary">
-            Jatka katsomaan tulokset
-          </button>
-        )}
+        <button disabled={busy} onClick={() => { resetSession(); onRestart(); }} className="btn-secondary">
+          Aloita alusta
+        </button>
       </div>
     </div>
   );
