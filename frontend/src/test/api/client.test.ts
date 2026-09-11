@@ -34,6 +34,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -51,6 +52,43 @@ describe('api.fetchGdpr', () => {
 });
 
 describe('api.runPositioning', () => {
+  it('hakee katkenneen kartoituksen valmistuneen tuloksen lähettämättä työtä uudelleen', async () => {
+    vi.useFakeTimers();
+    const finished = { revision: 1, status: 'clarifying' };
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce(makeFetchResponse({ revision: 0, status: 'uploaded' }))
+      .mockRejectedValueOnce(new TypeError('Temporary connection loss'))
+      .mockResolvedValueOnce(makeFetchResponse(finished));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = api.runPositioning('sid', 0);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(await result).toEqual(finished);
+    expect(fetchMock.mock.calls.filter(([, init]) => init.method === 'POST')).toHaveLength(1);
+    for (const [url, init] of fetchMock.mock.calls.slice(1)) {
+      expect(url).toBe('/api/positioning');
+      expect(init.headers.get('X-Session-ID')).toBe('sid');
+      expect(init.method).toBeUndefined();
+    }
+  });
+
+  it('palauttaa vastauksen tuloksen myös välityspalvelimen aikakatkaisun jälkeen', async () => {
+    const finished = { revision: 4, status: 'review' };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(makeFetchResponse({}, { ok: false, status: 504 }))
+      .mockResolvedValueOnce(makeFetchResponse(finished));
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await api.answerPositioning('sid', 3, 'q1', 'Vastaus', 'answered')).toEqual(finished);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('ei odota tulosta tunnetun mallivirheen jälkeen', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse({ detail: 'Mallivirhe' }, { ok: false, status: 502 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(api.runPositioning('sid', 0)).rejects.toMatchObject({ status: 502 });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it('kutsuu /api/positioning X-Session-ID-headerilla', async () => {
     const payload = { positioning: {}, evidence: {}, key_messages: {}, preferences: {} };
     const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse(payload));
