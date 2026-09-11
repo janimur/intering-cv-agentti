@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# Install root:root 0755 at /usr/local/sbin/intering-deploy.
+set -Eeuo pipefail
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+umask 077
+
+[[ $# == 0 && $EUID == 0 ]] || { echo 'Run through the configured deployment account.' >&2; exit 1; }
+IFS= read -r backend_image || { echo 'Missing backend image.' >&2; exit 1; }
+IFS= read -r web_image || { echo 'Missing web image.' >&2; exit 1; }
+if IFS= read -r extra || [[ -n ${extra:-} ]]; then
+    echo 'Expected exactly two image references.' >&2
+    exit 1
+fi
+[[ $backend_image =~ ^ghcr\.io/janimur/intering-cv-agentti-backend@sha256:[a-f0-9]{64}$ ]] || { echo 'Invalid backend image.' >&2; exit 1; }
+[[ $web_image =~ ^ghcr\.io/janimur/intering-cv-agentti-web@sha256:[a-f0-9]{64}$ ]] || { echo 'Invalid web image.' >&2; exit 1; }
+
+readonly app_dir=/opt/intering
+readonly compose_file=$app_dir/compose.production.yml
+readonly secrets_file=$app_dir/.env
+readonly release_dir=$app_dir/releases
+readonly current=$release_dir/current.env
+readonly previous=$release_dir/previous.env
+
+# The SSH account must never be able to alter the privileged deployment inputs.
+for path in "$app_dir" "$compose_file" "$secrets_file"; do
+    [[ ! -L $path && -e $path && $(stat -c %u "$path") == 0 ]] || { echo 'Unsafe deployment file ownership.' >&2; exit 1; }
+    mode=$(stat -c %a "$path")
+    (( (8#$mode & 8#022) == 0 )) || { echo 'Writable deployment input refused.' >&2; exit 1; }
+done
+[[ $(stat -c %a "$secrets_file") == 600 ]] || { echo 'Secrets file must have mode 600.' >&2; exit 1; }
+install -d -o root -g root -m 700 "$release_dir"
+[[ ! -L $release_dir && $(stat -c %u "$release_dir") == 0 ]] || exit 1
+exec 9>"$release_dir/deploy.lock"
+flock -w 600 9 || { echo 'Another deployment is in progress.' >&2; exit 1; }
+
+candidate=$(mktemp "$release_dir/candidate.XXXXXX.env")
+printf 'BACKEND_IMAGE=%s\nWEB_IMAGE=%s\n' "$backend_image" "$web_image" > "$candidate"
+apply_started=0
+committed=0
+
+compose() {
+    local release=$1
+    shift
+    # Ignore caller-controlled Docker/Compose environment and context.
+    env -i PATH="$PATH" HOME=/root /usr/bin/docker --host unix:///var/run/docker.sock compose \
+        --project-name intering --project-directory "$app_dir" \
+        --env-file "$secrets_file" --env-file "$release" --file "$compose_file" "$@"
+}
+
+healthy() {
+    curl --disable --noproxy "*" --fail --silent --show-error --max-time 10 http://127.0.0.1:8081/healthz >/dev/null &&
+    curl --disable --noproxy "*" --fail --silent --show-error --max-time 10 http://127.0.0.1:8081/api/health >/dev/null
+}
+
+cleanup() {
+    local result=$?
+    trap - EXIT
+    set +e
+    if (( apply_started && ! committed )); then
+        echo 'Deployment failed; restoring the previous running release.' >&2
+        if [[ -f $current ]]; then
+            if compose "$current" up -d --force-recreate --remove-orphans --wait --wait-timeout 120 && healthy; then
+                echo 'Rollback completed.' >&2
+            else
+                echo 'ROLLBACK FAILED: administrator intervention required.' >&2
+            fi
+        else
+            compose "$candidate" down --remove-orphans
+            echo 'First deployment removed; persistent volume retained.' >&2
+        fi
+    fi
+    rm -f "$candidate"
+    exit "$result"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+compose "$candidate" pull
+apply_started=1
+compose "$candidate" up -d --force-recreate --remove-orphans --wait --wait-timeout 120
+healthy
+
+if [[ -f $current ]]; then
+    cp "$current" "$previous.tmp"
+    mv "$previous.tmp" "$previous"
+fi
+mv "$candidate" "$current"
+committed=1
+echo 'Deployment healthy; current release recorded.'

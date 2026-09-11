@@ -46,3 +46,9 @@ app.include_router(cv_pdf.router, tags=["pdf"])
 app.include_router(admin.router, tags=["admin"])
 app.include_router(gdpr.router, tags=["gdpr"])
 app.include_router(admin_prompts.router, tags=["admin-prompts"])
+
+
+@app.get("/api/health", tags=["health"])
+async def health():
+    """Readiness is exposed after lifespan has initialized the database and browser."""
+    return {"status": "ok"}

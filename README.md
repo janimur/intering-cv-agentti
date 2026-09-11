@@ -93,3 +93,7 @@ uv run pytest tests/unit tests/api
 Manuaalinen laaduntarkistus: [TESTING.md](TESTING.md). `tests/test_kartoittaja.py` ja `tests/test_kirjoittajat.py` ovat erillisiä **maksullisia** CLI-ajoskriptejä, eivät sovelluksen hyväksyntäpolku. `uv run python evaluate.py` tarkistaa niiden tiedostotuotosten rakennetta. Numeron puuttuminen tai tulosten pieni määrä ei ole virhe; lähdeuskollisuus ja oma ääni vaativat myös ihmisen arvion.
 
 Mallina on projektin nykyinen `claude-opus-4-7`. About-pituus on promptitavoite, ei tiukka skeemaraja. Oikeilla käyttäjämateriaaleilla tehtävä laadunvarmistus tarvitaan promptimuutosten jälkeen.
+
+## Manuaalinen tuotantojulkaisu
+
+GitHub Actions testaa, rakentaa GHCR-imaget ja julkaisee muuttumattoman imageparin rajatulla SSH-rajapinnalla. Hostin nykyinen Nginx säilyy ja Intering käyttää vain localhost-porttia 8081. Asennus, GitHub-secrets, TLS/basic auth, healthcheckit ja rollback: [deploy/README.md](deploy/README.md).

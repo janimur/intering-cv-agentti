@@ -47,3 +47,9 @@ def test_metrics_initial_values(client):
     data = response.json()
     assert data["total_runs"] == 0
     assert data["error_count"] == 0
+
+
+def test_health_after_startup(client):
+    response = client.get("/api/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}

@@ -17,3 +17,5 @@ data/
 !HANDOVER.md
 !EVALUATION.md
 prompts/.gitkeep
+!prompts/*.md
+!backend/static/gdpr.md
