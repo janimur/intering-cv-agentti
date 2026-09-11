@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "../components/LoadingIndicator";
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../api/client";
 import type { PromptItem } from "../types/api";
@@ -91,7 +92,7 @@ export function AdminPage() {
     return (
       <div>
         <h1 className="mb-4">Admin: Promptit</h1>
-        <p className="text-gray-500">Ladataan...</p>
+        <LoadingIndicator label="Ladataan ohjeita…" />
       </div>
     );
   }
@@ -143,7 +144,7 @@ export function AdminPage() {
                     disabled={!isDirty || isSaving}
                     className="btn-primary text-xs px-3 py-1.5"
                   >
-                    {isSaving ? "Tallennetaan..." : "Tallenna"}
+                    {isSaving ? <LoadingIndicator label="Tallennetaan…" /> : "Tallenna"}
                   </button>
                 </div>
               </div>

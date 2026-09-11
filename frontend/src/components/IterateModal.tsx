@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "./LoadingIndicator";
 import { OperationProgress } from "./OperationProgress";
 import { useState } from "react";
 import type { WriterType, IteratePayload } from "../types/api";
@@ -72,7 +73,7 @@ export function IterateModal({
             disabled={running || !note.trim()}
             className="btn-primary"
           >
-            {running ? "Ajetaan..." : "Aja uudelleen"}
+            {running ? <LoadingIndicator label="Muokataan tekstiä…" /> : "Aja uudelleen"}
           </button>
         </div>
       </div>

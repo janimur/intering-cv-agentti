@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "../components/LoadingIndicator";
 import { useState } from "react";
 import { api, ApiError } from "../api/client";
 import { useSession } from "../store/SessionContext";
@@ -109,7 +110,7 @@ export function UploadPage({ onBack, onUploaded }: UploadPageProps) {
           disabled={!cvFile || isUploading}
           className="btn-primary"
         >
-          Lataa ja jatka
+          {isUploading ? <LoadingIndicator label="Luetaan aineistoa…" /> : "Lataa ja jatka"}
         </button>
       </div>
     </div>

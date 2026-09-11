@@ -5,17 +5,15 @@ import { LandingPage } from "./pages/LandingPage";
 import { UploadPage } from "./pages/UploadPage";
 import { PositioningPage } from "./pages/PositioningPage";
 import { WritersPage } from "./pages/WritersPage";
-import { OutputPage } from "./pages/OutputPage";
 import { AdminPage } from "./pages/AdminPage";
 import { setAdminToken, getAdminToken } from "./api/client";
 
-type Step = "landing" | "upload" | "positioning" | "writers" | "output";
+type Step = "landing" | "upload" | "positioning" | "writers";
 
 const STEPS: { id: Step; label: string }[] = [
   { id: "upload", label: "Lataa" },
   { id: "positioning", label: "Positiointi" },
   { id: "writers", label: "Kirjoittajat" },
-  { id: "output", label: "Tulokset" },
 ];
 
 function Logo() {
@@ -183,11 +181,8 @@ function AppContent() {
             {step === "writers" && (
               <WritersPage
                 onBack={() => setStep("positioning")}
-                onContinue={() => setStep("output")}
+                onRestart={() => setStep("landing")}
               />
-            )}
-            {step === "output" && (
-              <OutputPage onRestart={() => setStep("landing")} onBack={() => setStep("writers")} />
             )}
           </main>
         )}

@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "./LoadingIndicator";
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import { useSession } from "../store/SessionContext";
@@ -23,7 +24,7 @@ export function GdprBanner() {
         </div>
         <div className="px-6 py-5 overflow-y-auto flex-1">
           {loading ? (
-            <p className="text-gray-600">Ladataan...</p>
+            <LoadingIndicator label="Ladataan tietosuojaselostetta…" />
           ) : (
             <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed">
               {content}

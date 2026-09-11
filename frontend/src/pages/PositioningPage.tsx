@@ -1,3 +1,4 @@
+import { LoadingIndicator } from "../components/LoadingIndicator";
 import { OperationProgress } from "../components/OperationProgress";
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../api/client";
@@ -65,7 +66,7 @@ export function PositioningPage({ onBack, onContinue }: { onBack: () => void; on
       {errors.positioning && <p role="alert" className="text-danger mb-4">{errors.positioning}</p>}
       <OperationProgress sessionId={sessionId} scope="positioning" />
       {notice && <p role="status" className="text-green-700 mb-4">{notice}</p>}
-      {busy && <p role="status" className="text-intering-500 mb-4">Käsitellään kartoitusta… Tämä voi kestää hetken.</p>}
+      {busy && <div className="text-intering-500 mb-4"><LoadingIndicator label="Käsitellään kartoitusta…" /></div>}
       {!workflow && !busy && sessionId && <button className="btn-secondary mb-4" onClick={() => void perform(() => api.getPositioning(sessionId))}>Yritä latausta uudelleen</button>}
       {workflow?.status === "uploaded" && <div className="card mb-6"><button className="btn-primary" disabled={busy} onClick={() => void perform(() => api.runPositioning(sessionId!, workflow.revision))}>Aja kartoittaja</button></div>}
       {workflow?.status === "clarifying" && workflow.positioning && <section className="card mb-6"><h2 className="mb-2">Alustava havainto</h2><p className="font-medium mb-2">{workflow.positioning.positioning.primary_angle || "Täydennetään suuntaasi keskustelussa."}</p><p className="text-gray-600">{workflow.positioning.key_messages.elevator_pitch}</p><p className="text-sm text-gray-500 mt-3">Tämä on vielä ehdotus. Vastauksesi tarkentavat sitä ennen hyväksyntää.</p></section>}
