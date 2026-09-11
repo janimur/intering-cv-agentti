@@ -66,6 +66,34 @@ async function _request<T>(
   return await response.json();
 }
 
+// A browser/proxy may drop a long model request while the server keeps working.
+// Recover the committed revision with read-only requests; never repeat the POST.
+async function positioningModelRequest(
+  sessionId: string,
+  revision: number,
+  path: string,
+  payload: object,
+): Promise<WorkflowState> {
+  try {
+    return await _request<WorkflowState>(path, {
+      method: "POST", sessionId, headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    if (!(error instanceof TypeError) && !(error instanceof ApiError && error.status === 504)) throw error;
+    for (let attempt = 0; attempt < 120; attempt++) {
+      try {
+        const state = await _request<WorkflowState>("/api/positioning", { sessionId });
+        if (state.revision > revision) return state;
+      } catch (pollError) {
+        if (!(pollError instanceof TypeError) && !(pollError instanceof ApiError && pollError.status >= 500)) throw pollError;
+      }
+      await new Promise(resolve => setTimeout(resolve, 2500));
+    }
+    throw new ApiError(504, "Yhteys kartoitukseen katkesi eikä tulosta vielä saatu. Älä päivitä sivua. Voit yrittää hetken kuluttua uudelleen.");
+  }
+}
+
 export const api = {
   uploadFiles: async (
     cvFile: File,
@@ -83,12 +111,7 @@ export const api = {
     _request<WorkflowState>("/api/positioning", { sessionId }),
 
   runPositioning: (sessionId: string, revision: number) =>
-    _request<WorkflowState>("/api/positioning", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ revision }),
-      sessionId,
-    }),
+    positioningModelRequest(sessionId, revision, "/api/positioning", { revision }),
 
   updatePositioning: (sessionId: string, revision: number, doc: PositioningDocument, profile: MemberProfile) =>
     _request<WorkflowState>("/api/positioning", {
@@ -99,10 +122,7 @@ export const api = {
     }),
 
   answerPositioning: (sessionId: string, revision: number, question_id: string, text: string, disposition: AnswerDisposition) =>
-    _request<WorkflowState>("/api/positioning/answers", {
-      method: "POST", sessionId, headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ revision, question_id, text, disposition }),
-    }),
+    positioningModelRequest(sessionId, revision, "/api/positioning/answers", { revision, question_id, text, disposition }),
   finishPositioning: (sessionId: string, revision: number) =>
     _request<WorkflowState>("/api/positioning/finish", {
       method: "POST", sessionId, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ revision }),
