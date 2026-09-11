@@ -5,7 +5,8 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import Field, ValidationError
 
-from backend.app.dependencies import get_session_store
+from backend.app.dependencies import get_session_store, get_operation_store
+from backend.app.operations import OperationStatus, OperationStore
 from backend.app.metrics import measure
 from backend.app.sessions import IterationEntry, SessionStore, WriterType
 from backend.app.workflow import approved_context, expect_revision, require_approved
@@ -46,45 +47,61 @@ def _save_output(store, session, writer_type, output, checksum, note=None):
     return {**output.model_dump(), "source_revision": session.workflow.revision}
 
 
-@router.post("/api/writers/{writer_type}")
+@router.post("/api/writers/{writer_type}", response_model=OperationStatus, status_code=202)
 async def run_writer(writer_type: WriterType, payload: RevisionRequest,
                      x_session_id: str = Header(..., alias="X-Session-ID"),
-                     store: SessionStore = Depends(get_session_store)) -> dict:
-    session = store.get(x_session_id)
-    expect_revision(session, payload.revision)
-    context = approved_context(session)
-    prompt = compose_prompt(_WRITER_CONFIG[writer_type]["prompt_file"])
-    try:
-        with measure(writer_type):
-            output = await asyncio.to_thread(_get_runner(writer_type), session.positioning,
-                session.cv_text, session.linkedin_text, approved_context=context, system_prompt=prompt)
-            output = _WRITER_CONFIG[writer_type]["schema"].model_validate(output)
-    except (APIError, RuntimeError, ValidationError) as exc:
-        raise HTTPException(502, "Kirjoittajan vastaus oli virheellinen. Yritä uudelleen.") from exc
-    return _save_output(store, session, writer_type, output, prompt_checksum(prompt))
+                     idempotency_key: str = Header(..., alias="Idempotency-Key", min_length=8, max_length=128),
+                     store: SessionStore = Depends(get_session_store),
+                     operations: OperationStore = Depends(get_operation_store)):
+    store.get(x_session_id)
+    def prepare():
+        session = store.get(x_session_id)
+        expect_revision(session, payload.revision)
+        context = approved_context(session)
+        prompt = compose_prompt(_WRITER_CONFIG[writer_type]["prompt_file"])
+        async def job():
+            try:
+                with measure(writer_type):
+                    output = await asyncio.to_thread(_get_runner(writer_type), session.positioning,
+                        session.cv_text, session.linkedin_text, approved_context=context, system_prompt=prompt)
+                    output = _WRITER_CONFIG[writer_type]["schema"].model_validate(output)
+                    return _save_output(store, session, writer_type, output, prompt_checksum(prompt))
+            except (APIError, RuntimeError, ValidationError):
+                raise HTTPException(502, "Kirjoittajan vastaus oli virheellinen. Yritä uudelleen.") from None
+        return job
+    return operations.submit(session_id=x_session_id, key=idempotency_key, kind=f"writer:{writer_type}",
+        scope=f"writer:{writer_type}", revision=payload.revision, payload=payload.model_dump(), prepare=prepare)
 
 
-@router.post("/api/writers/{writer_type}/iterate")
+@router.post("/api/writers/{writer_type}/iterate", response_model=OperationStatus, status_code=202)
 async def iterate_writer(writer_type: WriterType, payload: IterateRequest,
                          x_session_id: str = Header(..., alias="X-Session-ID"),
-                         store: SessionStore = Depends(get_session_store)) -> dict:
-    session = store.get(x_session_id)
-    expect_revision(session, payload.revision)
-    context = approved_context(session)
-    current_output = getattr(session, f"{writer_type}_output")
-    if current_output is None:
-        raise HTTPException(409, f"Run /api/writers/{writer_type} first")
-    if session.workflow.output_revisions.get(writer_type) != session.workflow.revision:
-        raise HTTPException(409, "Tuotos on vanhentunut. Aja kirjoittaja uudelleen.")
-    history = [(entry.user_note, entry.output_json) for entry in session.iteration_history[writer_type]]
-    prompt = compose_prompt(_WRITER_CONFIG[writer_type]["prompt_file"])
-    note = f"Kohdekenttä: {payload.target_field}\n{payload.note}" if payload.target_field else payload.note
-    try:
-        with measure(f"{writer_type}_iterate"):
-            output = await asyncio.to_thread(_run_writer_with_history, writer_type, session.positioning,
-                session.cv_text, session.linkedin_text, history, note, approved_context=context,
-                current_output=current_output.model_dump_json(), system_prompt=prompt)
-            output = _WRITER_CONFIG[writer_type]["schema"].model_validate(output)
-    except (APIError, RuntimeError, ValidationError) as exc:
-        raise HTTPException(502, "Kirjoittajan vastaus oli virheellinen. Yritä uudelleen.") from exc
-    return _save_output(store, session, writer_type, output, prompt_checksum(prompt), note)
+                         idempotency_key: str = Header(..., alias="Idempotency-Key", min_length=8, max_length=128),
+                         store: SessionStore = Depends(get_session_store),
+                         operations: OperationStore = Depends(get_operation_store)):
+    store.get(x_session_id)
+    def prepare():
+        session = store.get(x_session_id)
+        expect_revision(session, payload.revision)
+        context = approved_context(session)
+        current_output = getattr(session, f"{writer_type}_output")
+        if current_output is None:
+            raise HTTPException(409, f"Run /api/writers/{writer_type} first")
+        if session.workflow.output_revisions.get(writer_type) != session.workflow.revision:
+            raise HTTPException(409, "Tuotos on vanhentunut. Aja kirjoittaja uudelleen.")
+        history = [(entry.user_note, entry.output_json) for entry in session.iteration_history[writer_type]]
+        prompt = compose_prompt(_WRITER_CONFIG[writer_type]["prompt_file"])
+        note = f"Kohdekenttä: {payload.target_field}\n{payload.note}" if payload.target_field else payload.note
+        async def job():
+            try:
+                with measure(f"{writer_type}_iterate"):
+                    output = await asyncio.to_thread(_run_writer_with_history, writer_type, session.positioning,
+                        session.cv_text, session.linkedin_text, history, note, approved_context=context,
+                        current_output=current_output.model_dump_json(), system_prompt=prompt)
+                    output = _WRITER_CONFIG[writer_type]["schema"].model_validate(output)
+                    return _save_output(store, session, writer_type, output, prompt_checksum(prompt), note)
+            except (APIError, RuntimeError, ValidationError):
+                raise HTTPException(502, "Kirjoittajan vastaus oli virheellinen. Yritä uudelleen.") from None
+        return job
+    return operations.submit(session_id=x_session_id, key=idempotency_key, kind=f"iterate:{writer_type}",
+        scope=f"writer:{writer_type}", revision=payload.revision, payload=payload.model_dump(), prepare=prepare)

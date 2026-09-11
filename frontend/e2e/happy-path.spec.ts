@@ -4,11 +4,13 @@ import type { WorkflowState } from '../src/types/api';
 
 test('kartoitus, oma ääni, hyväksyntä ja pelkkä CV sekä vanhentuneen tekstin merkintä', async ({ page }, testInfo) => {
   let state: WorkflowState = { ...sampleWorkflow, status: 'uploaded', revision: 0, approved_revision: null, positioning: null };
+  const jobs = new Map<string, unknown>();
   await page.route((url) => url.pathname.startsWith('/api/'), async (route) => {
     const path = new URL(route.request().url()).pathname;
     const body = route.request().method() === 'GET' || path === '/api/upload' ? {} : route.request().postDataJSON();
     let data: unknown;
-    if (path === '/api/gdpr') data = { content: 'Tietosuojaseloste' };
+    if (path.startsWith('/api/operations/')) data = jobs.get(path.split('/').pop()!);
+    else if (path === '/api/gdpr') data = { content: 'Tietosuojaseloste' };
     else if (path === '/api/upload') data = { session_id: 'sid', cv_text_preview: 'CV', linkedin_available: false };
     else if (path === '/api/positioning' && route.request().method() === 'GET') data = state;
     else if (path === '/api/positioning' && route.request().method() === 'POST') {
@@ -28,6 +30,12 @@ test('kartoitus, oma ääni, hyväksyntä ja pelkkä CV sekä vanhentuneen tekst
     } else if (path === '/api/cv/pdf') {
       return route.fulfill({ contentType: 'application/pdf', body: Buffer.from('%PDF-1.4 mock') });
     } else throw new Error(`Unexpected API call: ${path}`);
+    if (route.request().method() === 'POST' && (path === '/api/positioning' || path === '/api/positioning/answers' || path === '/api/writers/cv')) {
+      expect(route.request().headers()['idempotency-key']).toBeTruthy();
+      const id = `job-${jobs.size}`;
+      jobs.set(id, { id, status: 'succeeded', revision: body.revision, result: data, error: null });
+      data = { id, status: 'running', revision: body.revision, result: null, error: null };
+    }
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
   });
   await page.goto('/');

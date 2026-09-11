@@ -12,4 +12,6 @@ PositioningDocument:
 - key_messages: yhden lauseen ydin, lyhyt hissipuhe ja korkeintaan viisi todennettua proof_points-kohtaa.
 - preferences: henkilön sävy ja vältettävät kulmat, myös käyttäjän vastauksista.
 
-Ensimmäisellä analyysikutsulla palauta PositioningDocument käytössä olevaan save_positioning_document-työkaluun. Täydentävässä keskustelussa save_assessment palauttaa koko päivitetyn positioinnin, profiilin ja next_question-ehdotuksen tai null. Työkalun JSON-skeema määrää palautusrakenteen; älä lisää muita tulostusmuotoja.
+Ensimmäisellä analyysikutsulla palauta save_assessment-työkaluun koko positiointi, profiili ja ensimmäinen tarpeellinen next_question-ehdotus tai null yhdellä kutsulla. Täydentävässä keskustelussa save_assessment_update palauttaa vain muuttuneet positioning_updates-osiot ja profile_updates-kentät sekä next_question-ehdotuksen tai null. Älä kirjoita muuttumattomia osioita uudelleen. Puuttuva tai null päivityskenttä säilyttää aiemman arvon, tyhjä lista tyhjentää kyseisen listan. Kun osio tai profiililista muuttuu, sisällytä sen kaikki säilyvät aiemmat tiedot ja uudet tiedot. Työkalun JSON-skeema määrää palautusrakenteen; älä lisää muita tulostusmuotoja.
+
+Kun palautat evidence-osion päivityksen, sisällytä aina myös flagship_story: säilytä nykyinen päätarina, ellei käyttäjän uusi tieto edellytä sen muuttamista. Aseta se null-arvoksi vain, jos tarina todella poistetaan tai sitä ei ollut. Pelkkä supporting_results-listan muutos ei poista päätarinaa.

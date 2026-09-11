@@ -17,7 +17,7 @@ def model_reply(output, name="save_cv_document"):
 def test_writers_send_approved_context_to_model(writer, output):
     from tests._fixtures import sample_positioning
     client = MagicMock()
-    client.messages.create.return_value = model_reply(output())
+    client.messages.create.return_value = model_reply(output(), {"cv": "save_cv_document", "linkedin": "save_linkedin_output", "intering": "save_intering_output"}[writer])
     with patch("src.kirjoittajat.Anthropic", return_value=client):
         _run_writer(writer, sample_positioning(), "CV", "LinkedIn", approved_context="Oma ääni; korjaus vuoteen 2025; ei kriisejä")
     args = client.messages.create.call_args.kwargs

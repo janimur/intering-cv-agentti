@@ -11,7 +11,8 @@ load_dotenv(Path(__file__).parent.parent.parent / ".env")
 from backend.app.metrics import init_db
 from backend.app.pdf_renderer import start_browser, stop_browser
 from backend.app.sessions import SessionStore
-from backend.app.api import admin, admin_prompts, cv_pdf, gdpr, positioning, upload, writers
+from backend.app.operations import OperationStore
+from backend.app.api import admin, admin_prompts, cv_pdf, gdpr, operations, positioning, upload, writers
 
 
 @asynccontextmanager
@@ -19,10 +20,14 @@ async def lifespan(app: FastAPI):
     # Käynnistys: alusta tietokanta, sessiovarasto ja Playwright-selain
     init_db()
     app.state.session_store = SessionStore()
+    app.state.operation_store = OperationStore()
     playwright, browser = await start_browser()
     app.state.playwright = playwright
     app.state.browser = browser
-    yield
+    try:
+        yield
+    finally:
+        await app.state.operation_store.close()
     # Sammutus: sulje selain ja Playwright
     await stop_browser(app.state.playwright, app.state.browser)
 
@@ -41,6 +46,7 @@ app.add_middleware(
 # Reittien rekisteröinti
 app.include_router(upload.router, tags=["upload"])
 app.include_router(positioning.router, tags=["positioning"])
+app.include_router(operations.router, tags=["operations"])
 app.include_router(writers.router, tags=["writers"])
 app.include_router(cv_pdf.router, tags=["pdf"])
 app.include_router(admin.router, tags=["admin"])

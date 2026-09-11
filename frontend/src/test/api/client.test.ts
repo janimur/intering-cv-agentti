@@ -51,57 +51,77 @@ describe('api.fetchGdpr', () => {
   });
 });
 
-describe('api.runPositioning', () => {
-  it('hakee katkenneen kartoituksen valmistuneen tuloksen lähettämättä työtä uudelleen', async () => {
+const operation = (id: string, status: string, result: unknown = null, error: unknown = null) => ({ id, status, kind: 'positioning', revision: 0, result, error });
+
+describe('background model requests', () => {
+  it('retries a lost POST response with the same key and polls the existing operation', async () => {
     vi.useFakeTimers();
-    const finished = { revision: 1, status: 'clarifying' };
+    const payload = { revision: 1, status: 'clarifying' };
     const fetchMock = vi.fn()
       .mockRejectedValueOnce(new TypeError('Failed to fetch'))
-      .mockResolvedValueOnce(makeFetchResponse({ revision: 0, status: 'uploaded' }))
+      .mockResolvedValueOnce(makeFetchResponse(operation('job-1', 'running')))
       .mockRejectedValueOnce(new TypeError('Temporary connection loss'))
-      .mockResolvedValueOnce(makeFetchResponse(finished));
+      .mockResolvedValueOnce(makeFetchResponse(operation('job-1', 'succeeded', payload)));
     vi.stubGlobal('fetch', fetchMock);
-    const result = api.runPositioning('sid', 0);
-    await vi.advanceTimersByTimeAsync(5000);
-    expect(await result).toEqual(finished);
-    expect(fetchMock.mock.calls.filter(([, init]) => init.method === 'POST')).toHaveLength(1);
-    for (const [url, init] of fetchMock.mock.calls.slice(1)) {
-      expect(url).toBe('/api/positioning');
-      expect(init.headers.get('X-Session-ID')).toBe('sid');
-      expect(init.method).toBeUndefined();
-    }
+    const result = api.runPositioning('session-retry', 0);
+    await vi.advanceTimersByTimeAsync(6000);
+    expect(await result).toEqual(payload);
+    const posts = fetchMock.mock.calls.filter(([, init]) => init.method === 'POST');
+    expect(posts).toHaveLength(2);
+    expect(posts[0][1].headers.get('Idempotency-Key')).toBe(posts[1][1].headers.get('Idempotency-Key'));
+    expect(fetchMock.mock.calls[2][0]).toBe('/api/operations/job-1');
   });
 
-  it('palauttaa vastauksen tuloksen myös välityspalvelimen aikakatkaisun jälkeen', async () => {
-    const finished = { revision: 4, status: 'review' };
+  it('shares double clicks and supports writers and iteration using operations', async () => {
+    vi.useFakeTimers();
+    const payload = { headline: 'Test', source_revision: 3 };
     const fetchMock = vi.fn()
-      .mockResolvedValueOnce(makeFetchResponse({}, { ok: false, status: 504 }))
-      .mockResolvedValueOnce(makeFetchResponse(finished));
+      .mockResolvedValueOnce(makeFetchResponse(operation('writer-1', 'running')))
+      .mockResolvedValueOnce(makeFetchResponse(operation('writer-1', 'succeeded', payload)))
+      .mockResolvedValueOnce(makeFetchResponse(operation('iterate-1', 'succeeded', payload)));
     vi.stubGlobal('fetch', fetchMock);
-    expect(await api.answerPositioning('sid', 3, 'q1', 'Vastaus', 'answered')).toEqual(finished);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const first = api.runWriter('writer-session', 'linkedin', 3);
+    const second = api.runWriter('writer-session', 'linkedin', 3);
+    expect(first).toBe(second);
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(await first).toEqual(payload);
+    expect(await api.iterateWriter('writer-session', 'linkedin', { revision: 3, note: 'Shorter' })).toEqual(payload);
+    expect(fetchMock.mock.calls.filter(([, init]) => init.method === 'POST')).toHaveLength(2);
   });
 
-  it('ei odota tulosta tunnetun mallivirheen jälkeen', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse({ detail: 'Mallivirhe' }, { ok: false, status: 502 }));
+  it('retains the operation id after a connection failure and resumes on user retry', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(makeFetchResponse(operation('resume-1', 'running')))
+      .mockRejectedValue(new TypeError('offline'));
     vi.stubGlobal('fetch', fetchMock);
-    await expect(api.runPositioning('sid', 0)).rejects.toMatchObject({ status: 502 });
-    expect(fetchMock).toHaveBeenCalledOnce();
+    const failed = expect(api.answerPositioning('resume-session', 1, 'q1', 'Answer', 'answered')).rejects.toMatchObject({ status: 0 });
+    await vi.advanceTimersByTimeAsync(6000);
+    await failed;
+    fetchMock.mockResolvedValue(makeFetchResponse(operation('resume-1', 'succeeded', { revision: 2 })));
+    expect(await api.answerPositioning('resume-session', 1, 'q1', 'Answer', 'answered')).toEqual({ revision: 2 });
+    expect(fetchMock.mock.calls.filter(([, init]) => init.method === 'POST')).toHaveLength(1);
   });
 
-  it('kutsuu /api/positioning X-Session-ID-headerilla', async () => {
-    const payload = { positioning: {}, evidence: {}, key_messages: {}, preferences: {} };
-    const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse(payload));
+  it('surfaces a terminal failure and permits a new operation after it', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(makeFetchResponse(operation('failed-1', 'failed', null, { status: 502, detail: 'Mallivirhe' })))
+      .mockResolvedValueOnce(makeFetchResponse(operation('new-1', 'succeeded', { revision: 1 })));
     vi.stubGlobal('fetch', fetchMock);
+    await expect(api.runPositioning('failed-session', 0)).rejects.toMatchObject({ status: 502, detail: 'Mallivirhe' });
+    await api.runPositioning('failed-session', 0);
+    expect(fetchMock.mock.calls[0][1].headers.get('Idempotency-Key')).not.toBe(fetchMock.mock.calls[1][1].headers.get('Idempotency-Key'));
+  });
 
+  it('passes the session and payload with an idempotency key', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse(operation('quick', 'succeeded', { revision: 1 })));
+    vi.stubGlobal('fetch', fetchMock);
     await api.runPositioning('session-abc', 0);
-
-    expect(fetchMock).toHaveBeenCalledOnce();
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit & { headers: Headers }];
+    const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('/api/positioning');
     expect(init.headers.get('X-Session-ID')).toBe('session-abc');
-    expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body as string)).toEqual({ revision: 0 });
+    expect(init.headers.get('Idempotency-Key')).toBeTruthy();
+    expect(JSON.parse(init.body)).toEqual({ revision: 0 });
   });
 });
 
@@ -205,7 +225,7 @@ describe('api.uploadFiles', () => {
 describe('api.iterateWriter', () => {
   it('lähettää JSONin oikealla payloadilla', async () => {
     const payload = { headline: 'Tulos' };
-    const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse(payload));
+    const fetchMock = vi.fn().mockResolvedValue(makeFetchResponse(operation('iter-payload', 'succeeded', payload)));
     vi.stubGlobal('fetch', fetchMock);
 
     await api.iterateWriter('sid123', 'linkedin', { revision: 3, note: 'X' });

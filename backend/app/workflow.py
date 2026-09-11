@@ -5,7 +5,7 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from backend.app.sessions import Session
-from src.schemas import Assessment, ClarificationQuestion, PositioningUpdate, QuestionProposal, WorkflowState
+from src.schemas import AssessmentUpdate, MemberProfile, PositioningDocument, Assessment, ClarificationQuestion, PositioningUpdate, QuestionProposal, WorkflowState
 
 
 def expect_revision(session: Session, revision: int) -> None:
@@ -89,3 +89,13 @@ def approved_context(session: Session) -> str:
         "withheld_topics": [{"topic": a.topic, "question": a.question, "disposition": a.disposition}
                             for a in session.workflow.answers if a.disposition != "answered"],
     }, ensure_ascii=False)
+
+
+def merge_assessment_update(session: Session, update: AssessmentUpdate) -> Assessment:
+    require_positioning(session)
+    document = session.positioning.model_dump()
+    document.update(update.positioning_updates.model_dump(exclude_none=True))
+    profile = session.workflow.profile.model_dump()
+    profile.update(update.profile_updates.model_dump(exclude_none=True))
+    return Assessment(positioning=PositioningDocument.model_validate(document),
+                      profile=MemberProfile.model_validate(profile), next_question=update.next_question)

@@ -1,3 +1,4 @@
+import { OperationProgress } from "./OperationProgress";
 import { useState } from "react";
 import type {
   WriterType,
@@ -265,6 +266,7 @@ export function WriterCard({ type, output, onOutputChange }: WriterCardProps) {
       {!approved && <p className="text-sm text-amber-700 mt-3">Hyväksy positiointi ennen kirjoittamista.</p>}
       {stale && <p role="status" className="text-sm text-amber-700 mt-3">Tämä teksti perustuu aiempiin tietoihin. Aja kirjoittaja uudelleen hyväksytyillä tiedoilla.</p>}
 
+      <OperationProgress sessionId={sessionId} scope={type} />
       {error && (
         <p className="text-sm text-danger mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {error}

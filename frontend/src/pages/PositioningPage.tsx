@@ -1,3 +1,4 @@
+import { OperationProgress } from "../components/OperationProgress";
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../api/client";
 import { useSession } from "../store/SessionContext";
@@ -62,6 +63,7 @@ export function PositioningPage({ onBack, onContinue }: { onBack: () => void; on
       <p className="text-gray-600 mb-6">Analysoimme ensin materiaalisi. Sen jälkeen täydennämme tarvittaessa kokemustasi, tavoitteitasi ja omaa ääntäsi. Tarkistat yhteenvedon ennen tekstien kirjoittamista.</p>
       <p className="text-sm text-gray-500 mb-6">Työ säilyy vain tämän istunnon ajan. Sivun päivittäminen tai sulkeminen katkaisee työskentelyn.</p>
       {errors.positioning && <p role="alert" className="text-danger mb-4">{errors.positioning}</p>}
+      <OperationProgress sessionId={sessionId} scope="positioning" />
       {notice && <p role="status" className="text-green-700 mb-4">{notice}</p>}
       {busy && <p role="status" className="text-intering-500 mb-4">Käsitellään kartoitusta… Tämä voi kestää hetken.</p>}
       {!workflow && !busy && sessionId && <button className="btn-secondary mb-4" onClick={() => void perform(() => api.getPositioning(sessionId))}>Yritä latausta uudelleen</button>}

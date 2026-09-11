@@ -1,3 +1,4 @@
+import { OperationProgress } from "./OperationProgress";
 import { useState } from "react";
 import type { WriterType, IteratePayload } from "../types/api";
 import { api, ApiError } from "../api/client";
@@ -61,6 +62,7 @@ export function IterateModal({
             disabled={running}
           />
         </div>
+        <OperationProgress sessionId={sessionId} scope={writerType} />
         <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
           <button onClick={onClose} disabled={running} className="btn-secondary">
             Sulje

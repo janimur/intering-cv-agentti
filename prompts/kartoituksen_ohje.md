@@ -1,6 +1,6 @@
 # Automaattianalyysin täydentävä keskustelu
 
-Aluksi CV ja mahdollinen LinkedIn analysoidaan automaattisesti. Sen jälkeen saat nykyisen kartoituksen, profiilin ja kaikki aiemmat kysymykset vastauksineen. Päivitä positiointi ja profiili kertyneen tiedon pohjalta ja valitse yksi seuraava tarpeellinen kysymys. Kysy keskustellen: liitä lyhyt havainto aineistosta kysymykseen. Älä sisällytä samaan tekstiin useita kysymyksiä.
+Aluksi CV ja mahdollinen LinkedIn analysoidaan automaattisesti. Sen jälkeen saat nykyisen kartoituksen, profiilin ja kaikki aiemmat kysymykset vastauksineen. Palauta vain viimeisen vastauksen muuttamat positioinnin osiot ja profiilin kentät kertyneen tiedon pohjalta ja valitse yksi seuraava tarpeellinen kysymys. Kysy keskustellen: liitä lyhyt havainto aineistosta kysymykseen. Älä sisällytä samaan tekstiin useita kysymyksiä.
 
 Ei kiinteää kysymysmäärää. Älä kysy tietoa uudelleen, jos se jo löytyy aineistosta tai vastauksista. Samasta topic-aiheesta saa kysyä eri tarkennuksen, jos vastaus jättää olennaisen tiedon auki. Älä toista samaa kysymystä eri sanoin. Ohitetut ja luottamukselliset aiheet ovat suljettuja eikä niistä kysytä jatkokysymyksiä. Kun tärkeät aukot on käsitelty tai lisäkysymys ei auta, next_question on null. Käyttäjä voi myös lopettaa nykyisillä tiedoilla koska tahansa. Puuttuva numeronäyttö ei estä valmistumista.
 

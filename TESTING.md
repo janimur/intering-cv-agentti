@@ -31,3 +31,17 @@ Käynnistä sovellus README:n mukaan ja käytä julkaisukelpoista testimateriaal
 ## Laadun arviointi
 
 Kokeile sekä runsasta numeronäyttöä että niukkaa lähtöaineistoa. Arvioi kysymysten tarpeellisuus, oman äänen tunnistettavuus, todennetut laadulliset tulokset ja rehellinen oman vastuun kuvaus. Pelkkä automaattisten testien läpäisy ei varmista mallin kirjoittaman tekstin laatua.
+
+## Tausta-ajot ja yhteyskatkot
+
+- Käynnistä kartoitus ja tarkista, että POST palauttaa 202 nopeasti. Seuraa GET-tilaa.
+- Katkaise aloitusvastauksen vastaanotto ja toista sama pyyntö samalla Idempotency-Keyllä.
+  Tunnisteen ja lopputuloksen pitää pysyä samoina; mallia kutsutaan vain kerran.
+- Toista kirjoittaja/iterointi kesken ajon. Samansisältöinen pyyntö liittyy samaan työhön;
+  eri sisältö ei saa korvata sitä tai saada toisen pyynnön tulosta.
+- Katkaise verkko hetkeksi ja palauta yhteys. Pidempään katkettuaan käyttöliittymän
+  uusi yritys jatkaa saman operaation hakua. Se ei generoi uutta tekstiä.
+- Muuta kartoitusta kirjoittajan työn aikana: vanha tulos ei saa ylikirjoittaa uusia tietoja.
+- Tarkista osapäivityksestä, että pois jätetyt korjaukset, oma ääni ja rajaukset säilyvät.
+- `tests/api/test_operations.py` tarkistaa aidon 202/GET-sopimuksen; muut workflow-testit
+  odottavat samaa protokollaa testiapurin kautta, jotta niiden sisältöväitteet säilyvät.

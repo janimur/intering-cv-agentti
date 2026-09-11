@@ -143,3 +143,12 @@ export interface PromptItem {
   content: string;
   is_overlay: boolean;
 }
+
+export interface ModelOperation<T> {
+  id: string;
+  status: "running" | "succeeded" | "failed";
+  kind: string;
+  revision: number;
+  result: T | null;
+  error: { status: number; detail: string } | null;
+}
